@@ -13,6 +13,7 @@ const ASSETS = [
 	'./style.css',
 	'./app.js',
 	'./zone-logic.js',
+	'./secret-gesture.js',
 	'./manifest.json',
 	'./icons/icon-192.png',
 	'./icons/icon-512.png',

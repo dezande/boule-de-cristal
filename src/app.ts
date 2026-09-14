@@ -1,3 +1,4 @@
+import { IDLE_GESTURE, SECRET_GESTURE, pressBase, releaseBase, type SecretGestureState } from './secret-gesture.ts';
 import { zoneIndexForY, zoneBounds, isInCorner } from './zone-logic.ts';
 
 /* ================= Types ================= */
@@ -176,8 +177,9 @@ function hardReset(): void {
 /* ================= Gestes ================= */
 
 const RESET_HOLD_MS = 2000;
-const SECRET = { tapMaxMs: 300, gapMs: 700, holdMs: 1000, slopPx: 24 } as const;
-const secret = { taps: 0, lastTapEnd: -Infinity };
+/** Marge autour du socle qui compte encore comme « sur le socle », en pixels CSS. */
+const BASE_HIT_PAD_PX = 24;
+let secret: SecretGestureState = IDLE_GESTURE;
 let track: Track | null = null;
 
 function readSafeArea(): { right: number; bottom: number } {
@@ -193,7 +195,7 @@ function cornerSize(rect: DOMRect): { w: number; h: number } {
 
 function baseHitRect(): Box {
 	const r = baseEl.getBoundingClientRect();
-	const pad = 10;
+	const pad = BASE_HIT_PAD_PX;
 	return { left: r.left - pad, top: r.top - pad, right: r.right + pad, bottom: r.bottom + pad };
 }
 
@@ -214,7 +216,7 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	if (fingers !== 1) {
 		cancelTrackTimers();
 		track = null;
-		secret.taps = 0;
+		secret = IDLE_GESTURE;
 		return;
 	}
 
@@ -238,10 +240,11 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	track = current;
 
 	if (current.onBase) {
-		if (now - secret.lastTapEnd > SECRET.gapMs) secret.taps = 0;
-		if (secret.taps >= 3) current.settingsTimer = window.setTimeout(openSettings, SECRET.holdMs);
+		const result = pressBase(secret, now);
+		secret = result.state;
+		if (result.armsHold) current.settingsTimer = window.setTimeout(openSettings, SECRET_GESTURE.holdMs);
 	} else {
-		secret.taps = 0;
+		secret = IDLE_GESTURE;
 	}
 
 	const canReset = show.phase === 'pending' || show.phase === 'shown';
@@ -261,7 +264,7 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 
 function move(id: PointerId, clientX: number, clientY: number): void {
 	if (!track || track.id !== id || track.moved) return;
-	if (Math.hypot(clientX - track.x, clientY - track.y) > SECRET.slopPx) {
+	if (Math.hypot(clientX - track.x, clientY - track.y) > SECRET_GESTURE.slopPx) {
 		track.moved = true;
 		cancelTrackTimers();
 	}
@@ -270,16 +273,9 @@ function move(id: PointerId, clientX: number, clientY: number): void {
 function release(id: PointerId, cancelled: boolean): void {
 	if (!track || track.id !== id) return;
 	cancelTrackTimers();
-	if (track.onBase && !track.moved && !cancelled) {
+	if (track.onBase) {
 		const now = performance.now();
-		if (now - track.start <= SECRET.tapMaxMs) {
-			secret.taps = Math.min(secret.taps + 1, 3);
-			secret.lastTapEnd = now;
-		} else {
-			secret.taps = 0;
-		}
-	} else if (track.onBase) {
-		secret.taps = 0;
+		secret = releaseBase(secret, now, now - track.start, track.moved || cancelled);
 	}
 	track = null;
 }
@@ -513,7 +509,7 @@ form.brightness.addEventListener('input', () => {
 
 function openSettings(): void {
 	cancelTrackTimers();
-	secret.taps = 0;
+	secret = IDLE_GESTURE;
 	hardReset();
 	setTestMode(false);
 	renderForm();
@@ -583,7 +579,7 @@ function renderZones(): void {
 		zonesEl.append(zone);
 	}
 
-	zonesEl.append(hotspot('hotspot', baseHitRect(), 'Socle : 3 taps + appui 1 s'));
+	zonesEl.append(hotspot('hotspot', baseHitRect(), 'Socle : 2-3 taps + appui 1 s'));
 
 	const corner = cornerSize(rect);
 	const cornerBox = { left: rect.right - corner.w, top: rect.bottom - corner.h, right: rect.right, bottom: rect.bottom };

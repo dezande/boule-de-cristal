@@ -8,7 +8,7 @@ Accessoire de scène : une PWA mono-page, 100 % hors-ligne, qui fait apparaître
 | --- | --- |
 | Toucher le tiers **haut / central / bas** de l'écran | Arme **6 / 16 / 26**. Le nombre apparaît après le délai, puis l'écran se verrouille |
 | Appui de **2 s** dans le coin inférieur droit | Le nombre s'estompe, l'app se réarme |
-| **3 tapotements** sur le socle, puis **appui de 1 s** | Ouvre les réglages (et efface le nombre) |
+| **2 ou 3 tapotements** sur le socle, puis **garder le doigt appuyé ~1 s** | Ouvre les réglages (et efface le nombre) |
 
 Les réglages permettent de changer le nombre de zones (2, 3 ou 4), les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
 
