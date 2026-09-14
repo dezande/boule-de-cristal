@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' data:; connect-src 'self'; font-src 'self'; manifest-src 'self'; worker-src 'self'">
+<meta name="theme-color" content="#05020b">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Voyante">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Boule de cristal — accessoire de scène hors-ligne">
+<title>Voyante</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root {
+  --bg: #05020b;
+  --gold: #f3e2b0;
+  --gold-soft: rgba(243, 226, 176, .25);
+  --serif: "Didot", "Bodoni 72", "Bodoni MT", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Noto Serif Display", "Noto Serif", Georgia, serif;
+  --ball: min(74vw, 42vh, 520px);
+  --fade: 1.5s;
+  --dim: 0;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+@supports (height: 1svh) {
+  :root { --ball: min(74vw, 42svh, 520px); }
+}
+
+/* ---------- Hygiène tactile ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--gold);
+}
+body {
+  position: fixed;
+  inset: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+}
+input[type="text"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+[hidden] { display: none !important; }
+
+/* ---------- Scène ---------- */
+#stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  isolation: isolate;
+  background: var(--bg);
+}
+.velvet {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 75% 45% at 50% 40%, rgba(84, 46, 150, .42), rgba(40, 18, 80, .18) 55%, transparent 75%),
+    radial-gradient(ellipse 140% 60% at 50% 100%, rgba(52, 16, 72, .55), transparent 60%),
+    linear-gradient(180deg, #0c0619 0%, #0a0414 45%, #06020c 100%);
+}
+/* plis du rideau de velours */
+.velvet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .6;
+  background:
+    repeating-linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .45) 7vw, rgba(110, 70, 190, .07) 12vw, transparent 17vw),
+    repeating-linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .22) 3vw, transparent 5.5vw);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .6) 55%, transparent 82%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .6) 55%, transparent 82%);
+}
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 90% 75% at 50% 45%, transparent 42%, rgba(0, 0, 0, .5) 76%, rgba(0, 0, 0, .92) 100%);
+}
+
+/* ---------- Particules dorées ---------- */
+#dust {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mote {
+  position: absolute;
+  bottom: -12px;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: #ffe3a3;
+  box-shadow: 0 0 calc(var(--s) * 2.5) calc(var(--s) * .6) rgba(255, 196, 105, .45);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation:
+    rise var(--dur) linear var(--delay) infinite,
+    twinkle var(--tw) ease-in-out var(--delay) infinite;
+}
+@keyframes rise {
+  0%   { transform: translate3d(0, 0, 0); }
+  25%  { transform: translate3d(var(--dx), -28vh, 0); }
+  50%  { transform: translate3d(0, -56vh, 0); }
+  75%  { transform: translate3d(calc(var(--dx) * -1), -84vh, 0); }
+  100% { transform: translate3d(0, -112vh, 0); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: calc(var(--o) * .2); }
+  50%      { opacity: var(--o); }
+}
+
+/* ---------- Autel : halo, boule, socle ---------- */
+.altar {
+  --mist-t: 2s;
+  position: absolute;
+  left: 50%;
+  top: calc(50% + (var(--safe-t) - var(--safe-b)) / 2);
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.altar.instant, .altar.instant * { transition: none !important; }
+
+.halo, .halo-warm {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--ball) * .5);
+  width: calc(var(--ball) * 2.1);
+  height: calc(var(--ball) * 2.1);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.halo {
+  background: radial-gradient(circle, rgba(140, 100, 235, .36) 0%, rgba(96, 60, 190, .18) 30%, rgba(60, 30, 130, .07) 48%, transparent 66%);
+  opacity: .7;
+  transition: opacity var(--mist-t) ease-out;
+  animation: breathe 9s ease-in-out infinite;
+}
+.halo-warm {
+  background: radial-gradient(circle, rgba(255, 214, 140, .16) 0%, rgba(255, 190, 110, .06) 32%, transparent 55%);
+  opacity: 0;
+  transition: opacity var(--mist-t) ease-in-out;
+}
+.altar.stirring .halo { opacity: 1; transition-timing-function: ease-in; }
+.altar.revealed .halo-warm { opacity: 1; }
+@keyframes breathe {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+.floor {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ball) * -.1);
+  width: calc(var(--ball) * 1.7);
+  height: calc(var(--ball) * .36);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 34% 26% at 50% 58%, rgba(0, 0, 0, .75), transparent 100%),
+    radial-gradient(ellipse at 50% 50%, rgba(110, 80, 200, .2) 0%, rgba(40, 20, 80, .12) 42%, transparent 70%);
+}
+
+.ball {
+  position: relative;
+  z-index: 2;
+  width: var(--ball);
+  height: var(--ball);
+  border-radius: 50%;
+  box-shadow:
+    0 0 calc(var(--ball) * .07) rgba(120, 90, 220, .28),
+    0 calc(var(--ball) * .05) calc(var(--ball) * .12) rgba(0, 0, 0, .6);
+}
+.globe {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  -webkit-clip-path: circle(50% at 50% 50%);
+  clip-path: circle(50% at 50% 50%);
+  transform: translateZ(0);
+  background: radial-gradient(circle at 50% 58%, #22144a 0%, #140a33 38%, #0a0419 66%, #030107 100%);
+}
+.globe > * {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Brume : couches en rotation lente, en permanence */
+.mist-wrap {
+  opacity: .8;
+  transform: scale(1);
+  transition: opacity var(--mist-t) ease-out, transform var(--mist-t) ease-in-out;
+}
+.mist-wrap.front { opacity: .65; }
+.altar.stirring .mist-wrap {
+  opacity: 1;
+  transform: scale(1.07);
+  transition-timing-function: ease-in, ease-in-out;
+}
+.altar.stirring .mist-wrap.front { opacity: 1; }
+.mist {
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  will-change: transform;
+}
+.m1 {
+  background:
+    radial-gradient(30% 16% at 34% 42%, rgba(175, 145, 255, .8), transparent 70%),
+    radial-gradient(24% 13% at 64% 60%, rgba(120, 85, 225, .85), transparent 72%),
+    radial-gradient(14% 22% at 52% 30%, rgba(215, 195, 255, .5), transparent 70%),
+    radial-gradient(20% 10% at 44% 70%, rgba(190, 160, 255, .45), transparent 70%);
+  filter: blur(calc(var(--ball) * .028));
+  opacity: .9;
+  transform-origin: 47% 53%;
+  animation: swirl 41s linear infinite;
+}
+.m2 {
+  background:
+    radial-gradient(18% 32% at 60% 36%, rgba(225, 200, 255, .5), transparent 70%),
+    radial-gradient(32% 14% at 38% 68%, rgba(255, 214, 160, .26), transparent 70%),
+    radial-gradient(16% 16% at 72% 72%, rgba(150, 110, 240, .6), transparent 70%);
+  filter: blur(calc(var(--ball) * .045));
+  opacity: .75;
+  transform-origin: 54% 48%;
+  animation: swirl 63s linear infinite reverse;
+}
+.m3 {
+  background: conic-gradient(from 20deg at 50% 50%,
+    transparent 0deg, rgba(190, 165, 255, .45) 40deg, transparent 95deg,
+    rgba(160, 130, 250, .38) 170deg, transparent 230deg,
+    rgba(220, 200, 255, .4) 290deg, transparent 340deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 8%, #000 30%, #000 45%, transparent 62%);
+  mask-image: radial-gradient(circle, transparent 8%, #000 30%, #000 45%, transparent 62%);
+  filter: blur(calc(var(--ball) * .05));
+  opacity: .6;
+  animation: spin 97s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes swirl {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.inner-glow {
+  background: radial-gradient(circle at 50% 52%, rgba(200, 175, 255, .42) 0%, rgba(150, 115, 240, .16) 32%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--mist-t) ease-out;
+}
+.altar.stirring .inner-glow { opacity: .9; transition-timing-function: ease-in; }
+.warm-glow {
+  background: radial-gradient(circle at 50% 52%, rgba(255, 222, 160, .2) 0%, rgba(255, 200, 130, .07) 34%, transparent 58%);
+  opacity: 0;
+  transition: opacity var(--mist-t) ease-in-out;
+}
+.altar.revealed .warm-glow { opacity: 1; }
+
+/* Le nombre, qui émerge de la brume */
+.number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: calc(var(--ball) * var(--num-k, .42));
+  font-variant-numeric: lining-nums;
+  line-height: 1;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  color: #f6e6b6;
+  opacity: 0;
+  filter: blur(calc(var(--ball) * .035));
+  transform: scale(.88);
+  transition:
+    opacity var(--fade) cubic-bezier(.45, 0, .35, 1),
+    filter var(--fade) cubic-bezier(.2, .6, .3, 1),
+    transform calc(var(--fade) * 1.3) cubic-bezier(.2, .6, .3, 1);
+}
+.number.shown {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+.number span {
+  display: block;
+  padding-top: .06em;
+  text-shadow:
+    0 0 .04em rgba(255, 244, 214, .95),
+    0 0 .14em rgba(255, 210, 130, .6),
+    0 0 .38em rgba(230, 170, 90, .35),
+    0 0 .8em rgba(170, 120, 255, .3);
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1.5%); }
+}
+
+/* Verre : ombrage, réfraction, reflets */
+.shade {
+  background: radial-gradient(circle at 46% 40%, transparent 50%, rgba(8, 3, 20, .35) 72%, rgba(2, 0, 8, .85) 100%);
+  box-shadow:
+    inset 0 0 calc(var(--ball) * .03) rgba(210, 190, 255, .18),
+    inset calc(var(--ball) * -.04) calc(var(--ball) * -.06) calc(var(--ball) * .1) rgba(0, 0, 0, .55);
+}
+.refract {
+  background: radial-gradient(70% 30% at 55% 95%, rgba(190, 160, 255, .34), transparent 70%);
+}
+.arc {
+  inset: 3.5% !important;
+  background: radial-gradient(circle, transparent 64%, rgba(255, 255, 255, .15) 68.5%, transparent 71%);
+  -webkit-mask-image: linear-gradient(140deg, #000 18%, transparent 48%);
+  mask-image: linear-gradient(140deg, #000 18%, transparent 48%);
+}
+.arc-low {
+  inset: 5% !important;
+  background: radial-gradient(circle, transparent 63%, rgba(190, 160, 255, .12) 68%, transparent 71%);
+  -webkit-mask-image: linear-gradient(320deg, #000 15%, transparent 40%);
+  mask-image: linear-gradient(320deg, #000 15%, transparent 40%);
+}
+.globe > .specular {
+  inset: auto;
+  left: 17%;
+  top: 10%;
+  width: 34%;
+  height: 22%;
+  transform: rotate(-38deg);
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, .78) 0%, rgba(255, 255, 255, .32) 30%, rgba(255, 255, 255, .06) 60%, transparent 72%);
+  filter: blur(calc(var(--ball) * .006));
+}
+.globe > .glint {
+  inset: auto;
+  left: 25.5%;
+  top: 17%;
+  width: 7%;
+  height: 4.2%;
+  transform: rotate(-38deg);
+  background: radial-gradient(ellipse, #fff 0%, rgba(255, 255, 255, .7) 40%, transparent 72%);
+}
+.rimline { box-shadow: inset 0 0 0 1px rgba(220, 205, 255, .1); }
+
+.base {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: calc(var(--ball) * .8);
+  height: calc(var(--ball) * .4);
+  margin-top: calc(var(--ball) * -.13);
+  overflow: visible;
+}
+
+#dim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #000;
+  opacity: var(--dim);
+  pointer-events: none;
+}
+
+/* ---------- Mode test ---------- */
+#zones {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+.zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed rgba(243, 226, 176, .6);
+  background: rgba(243, 226, 176, .035);
+}
+.zone:first-child { border-top: none; }
+.zone.hit { animation: hit 1s ease-out; }
+@keyframes hit {
+  from { background: rgba(243, 226, 176, .3); }
+  to   { background: rgba(243, 226, 176, .035); }
+}
+.tag {
+  position: absolute;
+  font: 600 12px/1.2 -apple-system, system-ui, sans-serif;
+  color: var(--gold);
+  background: rgba(10, 5, 22, .8);
+  border: 1px solid rgba(243, 226, 176, .3);
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.zone .tag {
+  left: calc(12px + var(--safe-l));
+  top: 50%;
+  transform: translateY(-50%);
+}
+.tag b {
+  font: 400 18px/1 var(--serif);
+  margin-left: 4px;
+}
+.hotspot {
+  position: absolute;
+  border: 1.5px dashed rgba(170, 210, 255, .8);
+  background: rgba(120, 170, 255, .08);
+  border-radius: 14px;
+}
+.hotspot .tag {
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  color: #cfe2ff;
+  border-color: rgba(170, 210, 255, .4);
+}
+.hotspot.corner .tag {
+  left: auto;
+  right: 6px;
+  transform: none;
+}
+#testbar {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  top: calc(var(--safe-t) + 10px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(12, 6, 26, .9);
+  border: 1px solid rgba(243, 226, 176, .25);
+  font: 13px/1 -apple-system, system-ui, sans-serif;
+  color: var(--gold);
+  white-space: nowrap;
+  touch-action: none;
+}
+#testbar .state { padding: 0 8px; min-width: 8.5em; opacity: .9; }
+#testbar button { min-height: 34px; padding: 0 14px; border-radius: 999px; font-size: 13px; }
+
+/* ---------- Réglages ---------- */
+#settings {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 0%, rgba(60, 30, 110, .6), rgba(5, 2, 11, .97) 70%), var(--bg);
+  color: rgba(240, 232, 255, .9);
+}
+.sheet {
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: calc(var(--safe-t) + 24px) calc(var(--safe-r) + 18px) calc(var(--safe-b) + 32px) calc(var(--safe-l) + 18px);
+}
+.sheet h1 {
+  margin: 0;
+  font: 400 30px/1.1 var(--serif);
+  letter-spacing: .02em;
+  color: #f6e6b6;
+}
+.sheet .sub {
+  margin: 6px 0 20px;
+  font-size: 13px;
+  color: rgba(230, 215, 255, .55);
+}
+.card {
+  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid rgba(243, 226, 176, .12);
+}
+.row-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.row-label small { color: rgba(230, 215, 255, .5); font-size: 12px; }
+output { color: var(--gold); font-variant-numeric: tabular-nums; }
+.sheet button, #testbar button {
+  font-family: inherit;
+  color: var(--gold);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--gold-soft);
+  cursor: pointer;
+}
+.sheet button { min-height: 46px; border-radius: 12px; font-size: 15px; }
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .3);
+}
+.sheet .seg button { border-color: transparent; background: transparent; font: 400 22px/1 var(--serif); min-height: 42px; }
+.sheet .seg button[aria-checked="true"] {
+  background: linear-gradient(#3a2560, #241540);
+  color: #f6e6b6;
+  box-shadow: inset 0 0 0 1px rgba(243, 226, 176, .4);
+}
+.values { display: grid; gap: 8px; }
+.value-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  align-items: center;
+  gap: 12px;
+}
+.value-row[hidden] { display: none; }
+.value-row label { font-size: 15px; color: rgba(240, 232, 255, .8); }
+.value-row input {
+  width: 100%;
+  padding: 9px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(243, 226, 176, .22);
+  background: rgba(0, 0, 0, .35);
+  color: #f6e6b6;
+  font: 400 24px/1 var(--serif);
+  text-align: center;
+  outline: none;
+}
+.value-row input:focus { border-color: rgba(243, 226, 176, .6); }
+input[type="range"] {
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  accent-color: #d9b86c;
+}
+.status { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+.status small { display: block; margin-top: 3px; font-size: 12px; color: rgba(230, 215, 255, .5); }
+.dot {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #6b5a7a;
+  box-shadow: 0 0 0 3px rgba(107, 90, 122, .2);
+}
+.dot.lock { background: #7fe0a0; box-shadow: 0 0 10px rgba(127, 224, 160, .7); }
+.dot.video { background: #f0c36a; box-shadow: 0 0 10px rgba(240, 195, 106, .6); }
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 18px 0 14px;
+}
+.sheet button.primary {
+  border-color: transparent;
+  background: linear-gradient(180deg, #e7cc8e, #b8913f);
+  color: #1a0e05;
+  font-weight: 600;
+}
+.help { font-size: 14px; color: rgba(235, 225, 255, .75); }
+.help summary { cursor: pointer; }
+.help ul { margin: 10px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.sheet button.link {
+  width: 100%;
+  margin-top: 6px;
+  border: none;
+  background: none;
+  color: rgba(235, 225, 255, .45);
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+#safe-probe {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+  visibility: hidden;
+  pointer-events: none;
+}
+#keep-awake {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: .01;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<main id="stage">
+  <div class="velvet"></div>
+
+  <div class="altar" id="altar">
+    <div class="halo"></div>
+    <div class="halo-warm"></div>
+    <div class="floor"></div>
+
+    <div class="ball">
+      <div class="globe">
+        <div class="mist-wrap back">
+          <div class="mist m1"></div>
+          <div class="mist m2"></div>
+        </div>
+        <div class="inner-glow"></div>
+        <div class="warm-glow"></div>
+        <div class="number" id="number"><span id="number-text"></span></div>
+        <div class="mist-wrap front">
+          <div class="mist m3"></div>
+        </div>
+        <div class="refract"></div>
+        <div class="shade"></div>
+        <div class="arc"></div>
+        <div class="arc-low"></div>
+        <div class="specular"></div>
+        <div class="glint"></div>
+        <div class="rimline"></div>
+      </div>
+    </div>
+
+    <svg class="base" id="base" viewBox="0 0 240 120" aria-hidden="true">
+      <defs>
+        <linearGradient id="g-metal" x1="0" x2="1">
+          <stop offset="0" stop-color="#040208"/>
+          <stop offset=".28" stop-color="#1d1030"/>
+          <stop offset=".42" stop-color="#3a2552"/>
+          <stop offset=".56" stop-color="#1a0e2b"/>
+          <stop offset="1" stop-color="#030106"/>
+        </linearGradient>
+        <linearGradient id="g-top" x1="0" x2="1">
+          <stop offset="0" stop-color="#07030d"/>
+          <stop offset=".35" stop-color="#2b1a42"/>
+          <stop offset=".5" stop-color="#46306a"/>
+          <stop offset=".7" stop-color="#21133a"/>
+          <stop offset="1" stop-color="#050209"/>
+        </linearGradient>
+        <radialGradient id="g-lip-glow" cx=".5" cy="0" r=".7">
+          <stop offset="0" stop-color="#9a7ce6" stop-opacity=".5"/>
+          <stop offset="1" stop-color="#9a7ce6" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="g-gold" x1="0" x2="1">
+          <stop offset="0" stop-color="#c9a45c" stop-opacity="0"/>
+          <stop offset=".35" stop-color="#ecd092" stop-opacity=".75"/>
+          <stop offset=".65" stop-color="#c9a45c" stop-opacity=".5"/>
+          <stop offset="1" stop-color="#c9a45c" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M16 96 L10 106 C50 122 190 122 230 106 L224 96 Z" fill="url(#g-metal)"/>
+      <ellipse cx="120" cy="96" rx="104" ry="12" fill="url(#g-top)"/>
+      <path d="M16 96 C56 110 184 110 224 96" fill="none" stroke="url(#g-gold)" stroke-width=".8"/>
+      <path d="M76 40 C96 50 144 50 164 40 C150 58 136 70 138 94 C128 100 112 100 102 94 C104 70 90 58 76 40 Z" fill="url(#g-metal)"/>
+      <path d="M14 10 C58 40 182 40 226 10 L216 30 C178 58 62 58 24 30 Z" fill="url(#g-metal)"/>
+      <path d="M14 10 C58 40 182 40 226 10 L216 30 C178 58 62 58 24 30 Z" fill="url(#g-lip-glow)"/>
+      <path d="M14 10 C58 40 182 40 226 10" fill="none" stroke="url(#g-gold)" stroke-width="1"/>
+      <path d="M24 30 C62 58 178 58 216 30" fill="none" stroke="url(#g-gold)" stroke-width=".6" opacity=".6"/>
+    </svg>
+  </div>
+
+  <div id="dust"></div>
+  <div class="vignette"></div>
+</main>
+
+<div id="dim"></div>
+<div id="zones" hidden></div>
+
+<div id="testbar" hidden>
+  <span class="state" id="test-state">Prêt</span>
+  <button type="button" id="test-back">Réglages</button>
+  <button type="button" id="test-quit">Quitter</button>
+</div>
+
+<section id="settings" hidden aria-label="Réglages">
+  <div class="sheet">
+    <h1>Réglages</h1>
+    <p class="sub">Visible de vous seul. Enregistré sur cet appareil.</p>
+
+    <div class="card">
+      <div class="row-label">Nombre de zones <small>bandes horizontales</small></div>
+      <div class="seg" role="radiogroup">
+        <button type="button" role="radio" data-zones="2">2</button>
+        <button type="button" role="radio" data-zones="3">3</button>
+        <button type="button" role="radio" data-zones="4">4</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row-label">Valeurs <small>de haut en bas</small></div>
+      <div class="values">
+        <div class="value-row"><label for="v0"></label><input id="v0" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+        <div class="value-row"><label for="v1"></label><input id="v1" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+        <div class="value-row"><label for="v2"></label><input id="v2" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+        <div class="value-row"><label for="v3"></label><input id="v3" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label class="row-label" for="delay">Délai d'apparition <output id="delay-out"></output></label>
+      <input id="delay" type="range" min="0" max="10" step="0.5">
+    </div>
+
+    <div class="card">
+      <label class="row-label" for="fade">Durée du fondu <output id="fade-out"></output></label>
+      <input id="fade" type="range" min="0.5" max="6" step="0.1">
+    </div>
+
+    <div class="card">
+      <label class="row-label" for="brightness">Luminosité <output id="brightness-out"></output></label>
+      <input id="brightness" type="range" min="30" max="100" step="5">
+    </div>
+
+    <div class="card status">
+      <span class="dot" id="wake-dot"></span>
+      <div><span id="wake-text">Écran : verrou inactif</span><small id="wake-detail"></small></div>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="test-btn">Test des zones</button>
+      <button type="button" id="close-btn" class="primary">Fermer</button>
+    </div>
+
+    <details class="card help">
+      <summary>Gestes</summary>
+      <ul>
+        <li>Toucher une bande : arme sa valeur. L'écran se verrouille aussitôt.</li>
+        <li>Appui de 2 s dans le coin inférieur droit : le nombre s'estompe, l'app se réarme.</li>
+        <li>3 tapotements sur le socle puis appui de 1 s : ouvre ces réglages (efface le nombre).</li>
+      </ul>
+    </details>
+
+    <button type="button" id="defaults-btn" class="link">Rétablir les réglages par défaut</button>
+  </div>
+</section>
+
+<div id="safe-probe"></div>
+<video id="keep-awake" muted playsinline webkit-playsinline loop preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1">
+  <source type="video/webm" src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwEAAAAAAAKCEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHWTbuMU6uEElTDZ1OsggEnTbuMU6uEHFO7a1OsggJs7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxMYXZmNjEuNy4xMDBXQYxMYXZmNjEuNy4xMDBEiYhAn0AAAAAAABZUrmvMrgEAAAAAAABD14EBc8WIbmYwf2A4k16cgQAitZyDdW5kiIEAhoVWX1ZQOIOBASPjg4Q7msoA4JSwgQG6gQGagQJTwIEBVbCEVbmBARJUw2dAj3Nzn2PAgGfImUWjh0VOQ09ERVJEh4xMYXZmNjEuNy4xMDBzc+pjwItjxYhuZjB/YDiTXmfIkUWjikFMUEhBX01PREVEh4ExZ8ihRaOHRU5DT0RFUkSHlExhdmM2MS4xOS4xMDAgbGlidnB4Z8ihRaOIRFVSQVRJT05Eh5MwMDowMDowMi4wMDAwMDAwMDAAH0O2dUCq54EAoNuhooEAAAAQAgCdASoBAAEAC8cIhYWImYSIP4IADA1gAP7mtQB1obSmsu6BAaWtcAIAnQEqAQABAAvHCIWFiJmEiD+CAnWqAgy9zgD+6NcfjebzWtb/G83mtWIAoMihmIED6ACxAQAvEfwAGAAwP/QMAAAA/ua1AHWhp6al7oEBpaCxAQAvEfwAGAAwP/QMAMIA/ujXH43m81rW/xvN5rViAPuC/BgcU7trkbuPs4EAt4r3gQHxggG88IED">
+  <source type="video/mp4" src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMrbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlZ0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHObWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABeW1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAATlzdGJsAAAAuXN0c2QAAAAAAAAAAQAAAKlhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MS4xOS4xMDAgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAAL2F2Y0MBQsAe/+EAFmdCwB7ZHsBEAAADAAQAAAMACDxYuSABAAZoy4BlEyAAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAAKRAAAAGwAAAAYc3R0cwAAAAAAAAABAAAAAgAAQAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAgAAAAEAAAAcc3RzegAAAAAAAAAAAAAAAgAAABAAAAALAAAAFHN0Y28AAAAAAAAAAQAAA1sAAABhdWR0YQAAAFltZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAACxpbHN0AAAAJKl0b28AAAAcZGF0YQAAAAEAAAAATGF2ZjYxLjcuMTAwAAAACGZyZWUAAAAjbWRhdAAAAAxliIQGc5yYoAAh54AAAAAHQZo4DGc6gA==">
+</video>
+
+<script id="zone-logic">
+/* ZONE-LOGIC:BEGIN */
+/*
+ * Découpage de la surface tactile en bandes horizontales.
+ * Fonctions pures : aucune dépendance au DOM, testables sous Node (tests/zone-logic.test.mjs).
+ * Toutes les coordonnées sont relatives à la surface (0 = bord haut de la surface).
+ */
+(function (root) {
+  'use strict';
+
+  /** Indice (0 = haut) de la bande contenant y, ou -1 si les paramètres sont invalides. */
+  function zoneIndexForY(y, height, count) {
+    if (!Number.isFinite(y) || !Number.isFinite(height) || height <= 0) return -1;
+    if (!Number.isInteger(count) || count < 1) return -1;
+    const i = Math.floor((y * count) / height);
+    return i < 0 ? 0 : i >= count ? count - 1 : i;
+  }
+
+  /** Valeur associée à y ; une valeur par bande, de haut en bas. null si invalide. */
+  function valueForY(y, height, values) {
+    const i = zoneIndexForY(y, height, Array.isArray(values) ? values.length : 0);
+    return i < 0 ? null : values[i];
+  }
+
+  /** Limites [top, bottom) de chaque bande, en unités de la surface. */
+  function zoneBounds(height, count) {
+    if (!Number.isFinite(height) || height <= 0 || !Number.isInteger(count) || count < 1) return [];
+    const bounds = [];
+    for (let i = 0; i < count; i++) {
+      bounds.push({ index: i, top: (height * i) / count, bottom: (height * (i + 1)) / count });
+    }
+    return bounds;
+  }
+
+  /** Le point (x, y) est-il dans le coin inférieur droit de taille cornerW × cornerH ? */
+  function isInCorner(x, y, width, height, cornerW, cornerH) {
+    if (![x, y, width, height, cornerW].every(Number.isFinite)) return false;
+    const ch = Number.isFinite(cornerH) ? cornerH : cornerW;
+    return x >= width - cornerW && y >= height - ch;
+  }
+
+  const api = { zoneIndexForY, valueForY, zoneBounds, isInCorner };
+  if (typeof module === 'object' && module && module.exports) module.exports = api;
+  root.ZoneLogic = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+/* ZONE-LOGIC:END */
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (sel) => document.querySelector(sel);
+  const root = document.documentElement;
+  const stage = $('#stage');
+  const altar = $('#altar');
+  const numberEl = $('#number');
+  const numberText = $('#number-text');
+  const baseEl = $('#base');
+  const settingsEl = $('#settings');
+  const zonesEl = $('#zones');
+  const testbar = $('#testbar');
+  const testState = $('#test-state');
+  const safeProbe = $('#safe-probe');
+  const video = $('#keep-awake');
+  const { zoneIndexForY, zoneBounds, isInCorner } = window.ZoneLogic;
+
+  /* ================= Réglages ================= */
+
+  const STORAGE_KEY = 'voyante:settings:v1';
+  const DEFAULTS = Object.freeze({ zones: 3, values: ['6', '16', '26', '36'], delay: 3, fade: 1.5, brightness: 100 });
+  const ZONE_NAMES = {
+    2: ['Haut', 'Bas'],
+    3: ['Haut', 'Milieu', 'Bas'],
+    4: ['Haut', 'Centre haut', 'Centre bas', 'Bas'],
+  };
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const num = (v, fallback, lo, hi) => (typeof v === 'number' && Number.isFinite(v) ? clamp(v, lo, hi) : fallback);
+
+  function sanitize(raw) {
+    const src = raw && typeof raw === 'object' ? raw : {};
+    const zones = [2, 3, 4].includes(src.zones) ? src.zones : DEFAULTS.zones;
+    const values = DEFAULTS.values.map((d, i) => {
+      const v = Array.isArray(src.values) ? src.values[i] : undefined;
+      const s = typeof v === 'string' || typeof v === 'number' ? String(v).trim().slice(0, 6) : '';
+      return s || d;
+    });
+    return {
+      zones,
+      values,
+      delay: Math.round(num(src.delay, DEFAULTS.delay, 0, 10) * 2) / 2,
+      fade: Math.round(num(src.fade, DEFAULTS.fade, 0.5, 6) * 10) / 10,
+      brightness: Math.round(num(src.brightness, DEFAULTS.brightness, 30, 100)),
+    };
+  }
+
+  function loadSettings() {
+    try {
+      return sanitize(JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'));
+    } catch (_) {
+      return sanitize(null);
+    }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (_) { /* stockage indisponible : réglages conservés pour la session */ }
+  }
+
+  let settings = loadSettings();
+
+  function applySettings() {
+    root.style.setProperty('--fade', settings.fade + 's');
+    root.style.setProperty('--dim', String((100 - settings.brightness) / 100));
+  }
+
+  /* ================= Révélation ================= */
+
+  // idle → pending (délai, brume qui s'agite) → shown → clearing (fondu de sortie) → idle
+  const show = { phase: 'idle', timer: 0 };
+  const isLocked = () => show.phase !== 'idle';
+
+  function numberScale(value) {
+    const len = Array.from(String(value)).length;
+    return len <= 2 ? 0.42 : len === 3 ? 0.32 : len === 4 ? 0.25 : 0.2;
+  }
+
+  function setMistTiming(seconds) {
+    altar.style.setProperty('--mist-t', seconds + 's');
+  }
+
+  function arm(zoneIndex) {
+    const value = settings.values[zoneIndex];
+    show.phase = 'pending';
+    numberText.textContent = value;
+    numberEl.style.setProperty('--num-k', String(numberScale(value)));
+    // Montée lente (ease-in) : rien de perceptible à l'instant du toucher.
+    setMistTiming(Math.max(settings.delay, 1));
+    altar.classList.add('stirring');
+    clearTimeout(show.timer);
+    show.timer = setTimeout(reveal, settings.delay * 1000);
+    onPhaseChange();
+  }
+
+  function reveal() {
+    show.phase = 'shown';
+    setMistTiming(settings.fade * 1.6);
+    altar.classList.remove('stirring');
+    altar.classList.add('revealed');
+    numberEl.classList.add('shown');
+    onPhaseChange();
+  }
+
+  function fadeOut() {
+    clearTimeout(show.timer);
+    show.phase = 'clearing';
+    setMistTiming(settings.fade);
+    altar.classList.remove('stirring', 'revealed');
+    numberEl.classList.remove('shown');
+    // Reste verrouillé tant que le nombre n'a pas totalement disparu.
+    show.timer = setTimeout(() => {
+      show.phase = 'idle';
+      onPhaseChange();
+    }, settings.fade * 1000 + 150);
+    onPhaseChange();
+  }
+
+  function hardReset() {
+    clearTimeout(show.timer);
+    show.phase = 'idle';
+    altar.classList.add('instant');
+    altar.classList.remove('stirring', 'revealed');
+    numberEl.classList.remove('shown');
+    void altar.offsetWidth;
+    altar.classList.remove('instant');
+    onPhaseChange();
+  }
+
+  /* ================= Gestes ================= */
+
+  const RESET_HOLD_MS = 2000;
+  const SECRET = { tapMaxMs: 300, gapMs: 700, holdMs: 1000, slopPx: 24 };
+  const secret = { taps: 0, lastTapEnd: -Infinity };
+  let track = null;
+
+  function readSafeArea() {
+    const cs = getComputedStyle(safeProbe);
+    return { right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
+  }
+
+  function cornerSize(rect) {
+    const safe = readSafeArea();
+    const side = clamp(Math.min(rect.width, rect.height) * 0.22, 80, 150);
+    return { w: side + safe.right, h: side + safe.bottom };
+  }
+
+  function baseHitRect() {
+    const r = baseEl.getBoundingClientRect();
+    const pad = 10;
+    return { left: r.left - pad, top: r.top - pad, right: r.right + pad, bottom: r.bottom + pad };
+  }
+
+  function inRect(x, y, r) {
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
+
+  function cancelTrackTimers() {
+    if (!track) return;
+    clearTimeout(track.resetTimer);
+    clearTimeout(track.settingsTimer);
+    track.resetTimer = track.settingsTimer = 0;
+  }
+
+  function press(id, clientX, clientY, fingers) {
+    wake.ensure();
+    // Plusieurs doigts : rien ne se déclenche, et tout geste en cours est abandonné.
+    if (fingers !== 1) {
+      cancelTrackTimers();
+      track = null;
+      secret.taps = 0;
+      return;
+    }
+
+    const now = performance.now();
+    const rect = stage.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const corner = cornerSize(rect);
+
+    cancelTrackTimers();
+    track = {
+      id,
+      x: clientX,
+      y: clientY,
+      start: now,
+      moved: false,
+      onBase: inRect(clientX, clientY, baseHitRect()),
+      resetTimer: 0,
+      settingsTimer: 0,
+    };
+
+    if (track.onBase) {
+      if (now - secret.lastTapEnd > SECRET.gapMs) secret.taps = 0;
+      if (secret.taps >= 3) track.settingsTimer = setTimeout(openSettings, SECRET.holdMs);
+    } else {
+      secret.taps = 0;
+    }
+
+    if (!isLocked()) {
+      const index = zoneIndexForY(y, rect.height, settings.zones);
+      if (index >= 0) {
+        arm(index);
+        if (testMode) flashZone(index);
+      }
+    } else if ((show.phase === 'pending' || show.phase === 'shown') &&
+               isInCorner(x, y, rect.width, rect.height, corner.w, corner.h)) {
+      const t = track;
+      t.resetTimer = setTimeout(() => {
+        t.resetTimer = 0;
+        fadeOut();
+      }, RESET_HOLD_MS);
+    }
+  }
+
+  function move(id, clientX, clientY) {
+    if (!track || track.id !== id || track.moved) return;
+    if (Math.hypot(clientX - track.x, clientY - track.y) > SECRET.slopPx) {
+      track.moved = true;
+      cancelTrackTimers();
+    }
+  }
+
+  function release(id, cancelled) {
+    if (!track || track.id !== id) return;
+    cancelTrackTimers();
+    if (track.onBase && !track.moved && !cancelled) {
+      const now = performance.now();
+      if (now - track.start <= SECRET.tapMaxMs) {
+        secret.taps = Math.min(secret.taps + 1, 3);
+        secret.lastTapEnd = now;
+      } else {
+        secret.taps = 0;
+      }
+    } else if (track.onBase) {
+      secret.taps = 0;
+    }
+    track = null;
+  }
+
+  let lastTouchAt = -Infinity;
+
+  stage.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    lastTouchAt = performance.now();
+    const t = e.changedTouches[0];
+    press(t.identifier, t.clientX, t.clientY, e.touches.length);
+  }, { passive: false });
+
+  stage.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    for (const t of e.changedTouches) move(t.identifier, t.clientX, t.clientY);
+  }, { passive: false });
+
+  stage.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    for (const t of e.changedTouches) release(t.identifier, false);
+  }, { passive: false });
+
+  stage.addEventListener('touchcancel', (e) => {
+    for (const t of e.changedTouches) release(t.identifier, true);
+  }, { passive: false });
+
+  // Souris (répétition sur ordinateur) ; ignorée juste après un vrai toucher.
+  stage.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || performance.now() - lastTouchAt < 1000) return;
+    press('mouse', e.clientX, e.clientY, 1);
+  });
+  window.addEventListener('mousemove', (e) => move('mouse', e.clientX, e.clientY));
+  window.addEventListener('mouseup', () => release('mouse', false));
+
+  // Pas de menu contextuel, de sélection, de zoom, de rebond ni de pull-to-refresh.
+  const elementOf = (target) => (target instanceof Element ? target : target && target.parentElement);
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('selectstart', (e) => {
+    const el = elementOf(e.target);
+    if (!el || !el.closest('input')) e.preventDefault();
+  });
+  document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+  }
+  document.addEventListener('touchmove', (e) => {
+    const el = elementOf(e.target);
+    if (e.touches.length > 1 || !el || !el.closest('.sheet')) e.preventDefault();
+  }, { passive: false });
+
+  /* ================= Écran toujours allumé ================= */
+
+  const wake = (() => {
+    const dot = $('#wake-dot');
+    const text = $('#wake-text');
+    const detail = $('#wake-detail');
+    let sentinel = null;
+    let requesting = false;
+    let mode = 'off';
+
+    video.muted = true;
+    video.addEventListener('pause', () => { if (mode === 'video') setMode('off'); });
+    video.addEventListener('playing', () => { if (!sentinel) setMode('video'); });
+    // Certains navigateurs ignorent « loop » sur les médias très courts.
+    video.addEventListener('timeupdate', () => {
+      if (video.duration && video.currentTime > video.duration - 0.4) video.currentTime = 0;
+    });
+
+    function setMode(next) {
+      mode = next;
+      dot.className = 'dot ' + next;
+      if (next === 'lock') {
+        text.textContent = 'Écran : verrou actif';
+        detail.textContent = 'Screen Wake Lock API';
+      } else if (next === 'video') {
+        text.textContent = 'Écran : verrou actif';
+        detail.textContent = 'Repli : vidéo muette en boucle';
+      } else {
+        text.textContent = 'Écran : verrou inactif';
+        detail.textContent = 'Touchez la scène pour le réactiver';
+      }
+    }
+
+    function playVideo() {
+      if (!video.paused) return;
+      const p = video.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { if (!sentinel) setMode('off'); });
+    }
+
+    async function ensure() {
+      if (document.visibilityState !== 'visible' || requesting) return;
+      if (sentinel && !sentinel.released) return;
+      if ('wakeLock' in navigator && navigator.wakeLock) {
+        requesting = true;
+        try {
+          const s = await navigator.wakeLock.request('screen');
+          sentinel = s;
+          s.addEventListener('release', () => {
+            if (sentinel !== s) return;
+            sentinel = null;
+            setMode(video.paused ? 'off' : 'video');
+          });
+          setMode('lock');
+          video.pause();
+          return;
+        } catch (_) {
+          // Refusé (pas de geste utilisateur, économie d'énergie…) : repli vidéo.
+        } finally {
+          requesting = false;
+        }
+      }
+      playVideo();
+    }
+
+    setMode('off');
+    return { ensure };
+  })();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') wake.ensure();
+  });
+  window.addEventListener('pageshow', () => wake.ensure());
+  window.addEventListener('focus', () => wake.ensure());
+
+  /* ================= Panneau de réglages ================= */
+
+  let testMode = false;
+
+  const form = {
+    seg: settingsEl.querySelectorAll('[data-zones]'),
+    rows: settingsEl.querySelectorAll('.value-row'),
+    labels: settingsEl.querySelectorAll('.value-row label'),
+    inputs: settingsEl.querySelectorAll('.value-row input'),
+    delay: $('#delay'),
+    delayOut: $('#delay-out'),
+    fade: $('#fade'),
+    fadeOut: $('#fade-out'),
+    brightness: $('#brightness'),
+    brightnessOut: $('#brightness-out'),
+  };
+  const fmt = (n) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+
+  function renderForm() {
+    form.seg.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.zones) === settings.zones)));
+    form.rows.forEach((row, i) => { row.hidden = i >= settings.zones; });
+    form.labels.forEach((label, i) => { label.textContent = ZONE_NAMES[settings.zones][i] || ''; });
+    form.inputs.forEach((input, i) => {
+      if (document.activeElement !== input) input.value = settings.values[i];
+    });
+    form.delay.value = String(settings.delay);
+    form.delayOut.textContent = settings.delay === 0 ? 'immédiat' : fmt(settings.delay) + ' s';
+    form.fade.value = String(settings.fade);
+    form.fadeOut.textContent = fmt(settings.fade) + ' s';
+    form.brightness.value = String(settings.brightness);
+    form.brightnessOut.textContent = settings.brightness + ' %';
+  }
+
+  function commit() {
+    settings = sanitize(settings);
+    saveSettings();
+    applySettings();
+    renderForm();
+  }
+
+  form.seg.forEach((b) => b.addEventListener('click', () => {
+    settings.zones = Number(b.dataset.zones);
+    commit();
+  }));
+  form.inputs.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      const v = input.value.trim().slice(0, 6);
+      if (!v) return;
+      settings.values[i] = v;
+      commit();
+    });
+    input.addEventListener('blur', () => { input.value = settings.values[i]; });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+  });
+  form.delay.addEventListener('input', () => { settings.delay = Number(form.delay.value); commit(); });
+  form.fade.addEventListener('input', () => { settings.fade = Number(form.fade.value); commit(); });
+  form.brightness.addEventListener('input', () => { settings.brightness = Number(form.brightness.value); commit(); });
+
+  function openSettings() {
+    cancelTrackTimers();
+    secret.taps = 0;
+    hardReset();
+    setTestMode(false);
+    renderForm();
+    settingsEl.hidden = false;
+    settingsEl.querySelector('.sheet').scrollTop = 0;
+  }
+
+  function closeSettings() {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    settingsEl.hidden = true;
+    setTestMode(false);
+    hardReset();
+    saveSettings();
+    wake.ensure();
+  }
+
+  function startTest() {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    settingsEl.hidden = true;
+    hardReset();
+    setTestMode(true);
+  }
+
+  function setTestMode(on) {
+    testMode = on;
+    testbar.hidden = !on;
+    zonesEl.hidden = !on;
+    if (on) renderZones();
+    else zonesEl.textContent = '';
+  }
+
+  function tag(label, value) {
+    const el = document.createElement('span');
+    el.className = 'tag';
+    el.append(label);
+    if (value !== undefined) {
+      const b = document.createElement('b');
+      b.textContent = value;
+      el.append(b);
+    }
+    return el;
+  }
+
+  function renderZones() {
+    zonesEl.textContent = '';
+    const rect = stage.getBoundingClientRect();
+    for (const b of zoneBounds(rect.height, settings.zones)) {
+      const zone = document.createElement('div');
+      zone.className = 'zone';
+      zone.style.top = rect.top + b.top + 'px';
+      zone.style.height = b.bottom - b.top + 'px';
+      zone.append(tag(ZONE_NAMES[settings.zones][b.index] + ' →', settings.values[b.index]));
+      zonesEl.append(zone);
+    }
+
+    const base = baseHitRect();
+    const baseSpot = document.createElement('div');
+    baseSpot.className = 'hotspot';
+    Object.assign(baseSpot.style, {
+      left: base.left + 'px',
+      top: base.top + 'px',
+      width: base.right - base.left + 'px',
+      height: base.bottom - base.top + 'px',
+    });
+    baseSpot.append(tag('Socle : 3 taps + appui 1 s'));
+    zonesEl.append(baseSpot);
+
+    const corner = cornerSize(rect);
+    const cornerSpot = document.createElement('div');
+    cornerSpot.className = 'hotspot corner';
+    Object.assign(cornerSpot.style, {
+      left: rect.right - corner.w + 'px',
+      top: rect.bottom - corner.h + 'px',
+      width: corner.w + 'px',
+      height: corner.h + 'px',
+      borderRadius: '14px 0 0 0',
+    });
+    cornerSpot.append(tag('Réarmer : appui 2 s'));
+    zonesEl.append(cornerSpot);
+  }
+
+  function flashZone(index) {
+    const zone = zonesEl.querySelectorAll('.zone')[index];
+    if (!zone) return;
+    zone.classList.remove('hit');
+    void zone.offsetWidth;
+    zone.classList.add('hit');
+  }
+
+  function onPhaseChange() {
+    if (!testMode) return;
+    const labels = {
+      idle: 'Prêt',
+      pending: 'Armé · verrouillé',
+      shown: 'Affiché · verrouillé',
+      clearing: 'Réarmement…',
+    };
+    testState.textContent = labels[show.phase];
+  }
+
+  $('#close-btn').addEventListener('click', closeSettings);
+  $('#test-btn').addEventListener('click', startTest);
+  $('#test-back').addEventListener('click', openSettings);
+  $('#test-quit').addEventListener('click', closeSettings);
+  $('#defaults-btn').addEventListener('click', () => {
+    settings = sanitize(null);
+    commit();
+  });
+
+  window.addEventListener('resize', () => { if (testMode) renderZones(); });
+
+  /* ================= Particules ================= */
+
+  function spawnDust(count) {
+    const dust = $('#dust');
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < count; i++) {
+      const mote = document.createElement('i');
+      mote.className = 'mote';
+      const dur = 26 + Math.random() * 30;
+      mote.style.cssText = [
+        `left:${(Math.random() * 100).toFixed(2)}%`,
+        `--s:${(1.2 + Math.random() * 2.4).toFixed(2)}px`,
+        `--dur:${dur.toFixed(1)}s`,
+        `--delay:${(-Math.random() * dur).toFixed(1)}s`,
+        `--dx:${((Math.random() * 2 - 1) * 8).toFixed(2)}vw`,
+        `--tw:${(3 + Math.random() * 5).toFixed(1)}s`,
+        `--o:${(0.35 + Math.random() * 0.5).toFixed(2)}`,
+      ].join(';');
+      frag.append(mote);
+    }
+    dust.append(frag);
+  }
+
+  /* ================= Démarrage ================= */
+
+  applySettings();
+  spawnDust(18);
+  wake.ensure();
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
