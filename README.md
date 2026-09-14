@@ -21,7 +21,14 @@ L'app doit être servie en HTTPS (GitHub Pages convient ; tous les chemins sont 
 
 Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
-Pour publier une nouvelle version, incrémentez `CACHE` dans `src/sw/sw.ts`, sinon les appareils où l'app est déjà installée gardent l'ancienne. Poussez ensuite sur `main` : GitHub Actions vérifie les types, lance les tests, compile puis déploie sur GitHub Pages.
+Pour publier une nouvelle version, commitez vos modifications puis lancez :
+
+```sh
+npm run deploy              # déploiement réel
+npm run deploy -- --dry-run # simulation : vérifications et build, sans commit ni push
+```
+
+Le script vérifie que `main` est propre et à jour. Il incrémente ensuite `CACHE` dans `src/sw/sw.ts`, pour que les appareils où l'app est déjà installée récupèrent la nouvelle version. Il lance la vérification des types, les tests et le build, commite et pousse. Enfin, il suit GitHub Actions jusqu'au déploiement sur GitHub Pages et vérifie que le site sert la nouvelle version. Le suivi utilise GitHub CLI (`gh`), s'il est installé.
 
 ## Développement
 
@@ -44,3 +51,4 @@ npm run build       # génère dist/
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/` | Tests unitaires TypeScript (`node --test`) |
 | `scripts/check-dist.ts` | Vérifie que le build contient tout ce que le service worker met en cache |
+| `scripts/deploy.ts` | Déploiement complet (`npm run deploy`) |
