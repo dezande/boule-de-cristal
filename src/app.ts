@@ -1,4 +1,3 @@
-import { IDLE_GESTURE, SECRET_GESTURE, pressBase, releaseBase, type SecretGestureState } from './secret-gesture.ts';
 import { zoneIndexForY, zoneBounds, isInCorner } from './zone-logic.ts';
 
 /* ================= Types ================= */
@@ -20,7 +19,6 @@ interface Track {
 	id: PointerId;
 	x: number;
 	y: number;
-	start: number;
 	moved: boolean;
 	onBase: boolean;
 	resetTimer: number;
@@ -176,10 +174,14 @@ function hardReset(): void {
 
 /* ================= Gestes ================= */
 
+/** Appui maintenu dans le coin inférieur droit qui efface le nombre et réarme l'app. */
 const RESET_HOLD_MS = 2000;
+/** Appui maintenu sur le socle qui ouvre les réglages. */
+const SETTINGS_HOLD_MS = 5000;
+/** Glissement toléré pendant un appui maintenu, en pixels CSS. */
+const HOLD_SLOP_PX = 40;
 /** Marge autour du socle qui compte encore comme « sur le socle », en pixels CSS. */
 const BASE_HIT_PAD_PX = 24;
-let secret: SecretGestureState = IDLE_GESTURE;
 let track: Track | null = null;
 
 function readSafeArea(): { right: number; bottom: number } {
@@ -216,11 +218,9 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	if (fingers !== 1) {
 		cancelTrackTimers();
 		track = null;
-		secret = IDLE_GESTURE;
 		return;
 	}
 
-	const now = performance.now();
 	const rect = stage.getBoundingClientRect();
 	const x = clientX - rect.left;
 	const y = clientY - rect.top;
@@ -231,7 +231,6 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 		id,
 		x: clientX,
 		y: clientY,
-		start: now,
 		moved: false,
 		onBase: inRect(clientX, clientY, baseHitRect()),
 		resetTimer: 0,
@@ -239,13 +238,7 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	};
 	track = current;
 
-	if (current.onBase) {
-		const result = pressBase(secret, now);
-		secret = result.state;
-		if (result.armsHold) current.settingsTimer = window.setTimeout(openSettings, SECRET_GESTURE.holdMs);
-	} else {
-		secret = IDLE_GESTURE;
-	}
+	if (current.onBase) current.settingsTimer = window.setTimeout(openSettings, SETTINGS_HOLD_MS);
 
 	const canReset = show.phase === 'pending' || show.phase === 'shown';
 	if (!isLocked()) {
@@ -264,19 +257,15 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 
 function move(id: PointerId, clientX: number, clientY: number): void {
 	if (!track || track.id !== id || track.moved) return;
-	if (Math.hypot(clientX - track.x, clientY - track.y) > SECRET_GESTURE.slopPx) {
+	if (Math.hypot(clientX - track.x, clientY - track.y) > HOLD_SLOP_PX) {
 		track.moved = true;
 		cancelTrackTimers();
 	}
 }
 
-function release(id: PointerId, cancelled: boolean): void {
+function release(id: PointerId): void {
 	if (!track || track.id !== id) return;
 	cancelTrackTimers();
-	if (track.onBase) {
-		const now = performance.now();
-		secret = releaseBase(secret, now, now - track.start, track.moved || cancelled);
-	}
 	track = null;
 }
 
@@ -296,11 +285,11 @@ stage.addEventListener('touchmove', (e) => {
 
 stage.addEventListener('touchend', (e) => {
 	e.preventDefault();
-	for (const t of e.changedTouches) release(t.identifier, false);
+	for (const t of e.changedTouches) release(t.identifier);
 }, { passive: false });
 
 stage.addEventListener('touchcancel', (e) => {
-	for (const t of e.changedTouches) release(t.identifier, true);
+	for (const t of e.changedTouches) release(t.identifier);
 }, { passive: false });
 
 // Souris (répétition sur ordinateur) ; ignorée juste après un vrai toucher.
@@ -309,7 +298,7 @@ stage.addEventListener('mousedown', (e) => {
 	press('mouse', e.clientX, e.clientY, 1);
 });
 window.addEventListener('mousemove', (e) => move('mouse', e.clientX, e.clientY));
-window.addEventListener('mouseup', () => release('mouse', false));
+window.addEventListener('mouseup', () => release('mouse'));
 
 // Pas de menu contextuel, de sélection, de zoom, de rebond ni de pull-to-refresh.
 const elementOf = (target: EventTarget | null): Element | null =>
@@ -509,7 +498,6 @@ form.brightness.addEventListener('input', () => {
 
 function openSettings(): void {
 	cancelTrackTimers();
-	secret = IDLE_GESTURE;
 	hardReset();
 	setTestMode(false);
 	renderForm();
@@ -579,7 +567,7 @@ function renderZones(): void {
 		zonesEl.append(zone);
 	}
 
-	zonesEl.append(hotspot('hotspot', baseHitRect(), 'Socle : 2-3 taps + appui 1 s'));
+	zonesEl.append(hotspot('hotspot', baseHitRect(), 'Socle : appui 5 s'));
 
 	const corner = cornerSize(rect);
 	const cornerBox = { left: rect.right - corner.w, top: rect.bottom - corner.h, right: rect.right, bottom: rect.bottom };
