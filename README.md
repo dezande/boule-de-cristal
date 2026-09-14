@@ -36,7 +36,7 @@ Il faut Node 24 ou plus récent. TypeScript et Sass servent uniquement au build 
 
 ```sh
 npm install
-npm run serve       # build puis http://localhost:8000
+npm run serve       # build puis serveur local sur http://localhost:8000
 npm test            # tests de la logique des zones
 npm run typecheck   # vérification des types
 npm run build       # génère dist/
@@ -51,4 +51,5 @@ npm run build       # génère dist/
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/` | Tests unitaires TypeScript (`node --test`) |
 | `scripts/check-dist.ts` | Vérifie que le build contient tout ce que le service worker met en cache |
+| `scripts/serve.ts` | Serveur local de `dist/` (`npm run serve`) |
 | `scripts/deploy.ts` | Déploiement complet (`npm run deploy`) |
