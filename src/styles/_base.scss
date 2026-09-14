@@ -63,6 +63,18 @@ input[type="text"] {
 	pointer-events: none;
 }
 
+// Version affichée sur la scène (masquable dans les réglages). Laisse passer les touchers.
+#version-badge {
+	position: fixed;
+	z-index: 10;
+	left: calc(var(--safe-l) + 12px);
+	bottom: calc(var(--safe-b) + 10px);
+	font: 11px/1 $sans;
+	letter-spacing: .03em;
+	color: rgba(243, 226, 176, .45);
+	pointer-events: none;
+}
+
 // Sonde de lecture des safe areas.
 #safe-probe {
 	position: fixed;

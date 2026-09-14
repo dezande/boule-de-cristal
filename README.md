@@ -10,7 +10,11 @@ Accessoire de scène : une PWA mono-page, 100 % hors-ligne, qui fait apparaître
 | Appui de **2 s** dans le coin inférieur droit | Le nombre s'estompe, l'app se réarme |
 | **Appui de 5 s** sur le socle (le pied de la boule) | Ouvre les réglages (et efface le nombre) |
 
-Les réglages permettent de changer le nombre de zones (2, 3 ou 4), les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
+Les réglages permettent de changer le nombre de zones (2, 3 ou 4), les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Une option y masque la petite version affichée en bas à gauche de la scène (visible par défaut). Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
+
+### Diagnostic
+
+Ajoutez `?debug` à l'adresse (https://dezande.github.io/boule-de-cristal/?debug) pour afficher en haut de l'écran un journal de ce que l'appareil reçoit : version, touchers, durée des appuis, glissements, interruptions par le système. À utiliser dans le navigateur, pas dans l'app installée.
 
 ## Installation
 

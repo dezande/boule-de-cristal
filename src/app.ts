@@ -13,12 +13,15 @@ interface Settings {
 	delay: number;
 	fade: number;
 	brightness: number;
+	showVersion: boolean;
 }
 
 interface Track {
 	id: PointerId;
 	x: number;
 	y: number;
+	start: number;
+	drift: number;
 	moved: boolean;
 	onBase: boolean;
 	resetTimer: number;
@@ -52,14 +55,36 @@ const testbar = $('#testbar');
 const testState = $('#test-state');
 const safeProbe = $('#safe-probe');
 const video = $<HTMLVideoElement>('#keep-awake');
+const versionBadge = $('#version-badge');
+
+/* ================= Version ================= */
+
+// Remplacés au build par scripts/stamp-build.ts ; affichés dans les réglages et le diagnostic.
+const BUILD = { version: '__APP_VERSION__', commit: '__APP_COMMIT__' };
+
+/* ================= Diagnostic (?debug) ================= */
+
+// Avec ?debug dans l'adresse, un journal affiche en direct ce que l'appareil reçoit.
+// Invisible et inactif sans ce paramètre.
+const DEBUG = new URLSearchParams(location.search).has('debug');
+const debugLines: string[] = [];
+const debugEl = DEBUG ? document.body.appendChild(document.createElement('pre')) : null;
+if (debugEl) debugEl.id = 'debug-log';
+
+function debugLog(message: string): void {
+	if (!debugEl) return;
+	const time = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+	debugLines.push(`${time} ${message}`);
+	if (debugLines.length > 14) debugLines.shift();
+	const controller = 'serviceWorker' in navigator && navigator.serviceWorker.controller ? 'oui' : 'non';
+	debugEl.textContent = `Version ${BUILD.version} (${BUILD.commit}) · SW actif : ${controller}\n${debugLines.join('\n')}`;
+}
 
 /* ================= Réglages ================= */
 
-// Remplacés au build par scripts/stamp-build.ts ; affichés dans les réglages.
-const BUILD = { version: '__APP_VERSION__', commit: '__APP_COMMIT__' };
 
 const STORAGE_KEY = 'voyante:settings:v1';
-const DEFAULTS: Readonly<Settings> = Object.freeze({ zones: 3, values: ['6', '16', '26', '36'], delay: 3, fade: 1.5, brightness: 100 });
+const DEFAULTS: Readonly<Settings> = Object.freeze({ zones: 3, values: ['6', '16', '26', '36'], delay: 3, fade: 1.5, brightness: 100, showVersion: true });
 const ZONE_NAMES: Record<ZoneCount, readonly string[]> = {
 	2: ['Haut', 'Bas'],
 	3: ['Haut', 'Milieu', 'Bas'],
@@ -84,6 +109,7 @@ function sanitize(raw: unknown): Settings {
 		delay: Math.round(num(src.delay, DEFAULTS.delay, 0, 10) * 2) / 2,
 		fade: Math.round(num(src.fade, DEFAULTS.fade, 0.5, 6) * 10) / 10,
 		brightness: Math.round(num(src.brightness, DEFAULTS.brightness, 30, 100)),
+		showVersion: typeof src.showVersion === 'boolean' ? src.showVersion : DEFAULTS.showVersion,
 	};
 }
 
@@ -108,6 +134,7 @@ let settings = loadSettings();
 function applySettings(): void {
 	root.style.setProperty('--fade', `${settings.fade}s`);
 	root.style.setProperty('--dim', String((100 - settings.brightness) / 100));
+	versionBadge.hidden = !settings.showVersion;
 }
 
 /* ================= Révélation ================= */
@@ -214,8 +241,10 @@ function cancelTrackTimers(): void {
 
 function press(id: PointerId, clientX: number, clientY: number, fingers: number): void {
 	void wake.ensure();
+	touchedSinceShown = true;
 	// Plusieurs doigts : rien ne se déclenche, et tout geste en cours est abandonné.
 	if (fingers !== 1) {
+		debugLog(`toucher : ${fingers} doigts, geste annulé`);
 		cancelTrackTimers();
 		track = null;
 		return;
@@ -231,6 +260,8 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 		id,
 		x: clientX,
 		y: clientY,
+		start: performance.now(),
+		drift: 0,
 		moved: false,
 		onBase: inRect(clientX, clientY, baseHitRect()),
 		resetTimer: 0,
@@ -238,6 +269,7 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	};
 	track = current;
 
+	debugLog(`posé (${Math.round(clientX)}, ${Math.round(clientY)}) ${current.onBase ? 'SUR le socle : réglages dans 5 s' : 'hors socle'}`);
 	if (current.onBase) current.settingsTimer = window.setTimeout(openSettings, SETTINGS_HOLD_MS);
 
 	const canReset = show.phase === 'pending' || show.phase === 'shown';
@@ -257,19 +289,25 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 
 function move(id: PointerId, clientX: number, clientY: number): void {
 	if (!track || track.id !== id || track.moved) return;
-	if (Math.hypot(clientX - track.x, clientY - track.y) > HOLD_SLOP_PX) {
+	const distance = Math.hypot(clientX - track.x, clientY - track.y);
+	track.drift = Math.max(track.drift, distance);
+	if (distance > HOLD_SLOP_PX) {
 		track.moved = true;
 		cancelTrackTimers();
+		debugLog(`glissé de ${Math.round(distance)} px : appui annulé`);
 	}
 }
 
-function release(id: PointerId): void {
+function release(id: PointerId, reason = 'levé'): void {
 	if (!track || track.id !== id) return;
+	debugLog(`${reason} après ${((performance.now() - track.start) / 1000).toFixed(1)} s, glissement max ${Math.round(track.drift)} px`);
 	cancelTrackTimers();
 	track = null;
 }
 
 let lastTouchAt = -Infinity;
+/** Un toucher a eu lieu depuis l'ouverture ou le retour au premier plan : pas de rechargement automatique. */
+let touchedSinceShown = false;
 
 stage.addEventListener('touchstart', (e) => {
 	e.preventDefault();
@@ -289,7 +327,7 @@ stage.addEventListener('touchend', (e) => {
 }, { passive: false });
 
 stage.addEventListener('touchcancel', (e) => {
-	for (const t of e.changedTouches) release(t.identifier);
+	for (const t of e.changedTouches) release(t.identifier, 'INTERROMPU par le système (touchcancel)');
 }, { passive: false });
 
 // Souris (répétition sur ordinateur) ; ignorée juste après un vrai toucher.
@@ -304,7 +342,10 @@ window.addEventListener('mouseup', () => release('mouse'));
 const elementOf = (target: EventTarget | null): Element | null =>
 	target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
 
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('contextmenu', (e) => {
+	e.preventDefault();
+	debugLog('menu contextuel (appui long système) bloqué');
+});
 document.addEventListener('selectstart', (e) => {
 	if (!elementOf(e.target)?.closest('input')) e.preventDefault();
 });
@@ -390,7 +431,13 @@ const wake = (() => {
 })();
 
 document.addEventListener('visibilitychange', () => {
-	if (document.visibilityState === 'visible') void wake.ensure();
+	if (document.visibilityState !== 'visible') return;
+	void wake.ensure();
+	// Retour au premier plan hors tour : une mise à jour éventuelle pourra s'appliquer.
+	if (show.phase === 'idle' && settingsEl.hidden) touchedSinceShown = false;
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.getRegistration().then((registration) => registration?.update()).catch(() => {});
+	}
 });
 window.addEventListener('pageshow', () => void wake.ensure());
 window.addEventListener('focus', () => void wake.ensure());
@@ -410,6 +457,7 @@ const form = {
 	fadeOut: $<HTMLOutputElement>('#fade-out'),
 	brightness: $<HTMLInputElement>('#brightness'),
 	brightnessOut: $<HTMLOutputElement>('#brightness-out'),
+	showVersion: $<HTMLInputElement>('#show-version'),
 };
 const fmt = (n: number): string => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
@@ -434,6 +482,7 @@ function renderForm(): void {
 	form.fadeOut.textContent = `${fmt(settings.fade)} s`;
 	form.brightness.value = String(settings.brightness);
 	form.brightnessOut.textContent = `${settings.brightness} %`;
+	form.showVersion.checked = settings.showVersion;
 }
 
 function renderAbout(): void {
@@ -495,8 +544,13 @@ form.brightness.addEventListener('input', () => {
 	settings.brightness = Number(form.brightness.value);
 	commit();
 });
+form.showVersion.addEventListener('change', () => {
+	settings.showVersion = form.showVersion.checked;
+	commit();
+});
 
 function openSettings(): void {
+	debugLog('réglages ouverts');
 	cancelTrackTimers();
 	hardReset();
 	setTestMode(false);
@@ -633,11 +687,19 @@ function spawnDust(count: number): void {
 
 /* ================= Démarrage ================= */
 
+versionBadge.textContent = `v${BUILD.version} · ${BUILD.commit}`;
 applySettings();
 spawnDust(18);
 void wake.ensure();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+	// Nouvelle version installée : on recharge pour l'afficher, mais seulement si personne n'a
+	// touché l'écran depuis l'ouverture (ou le retour au premier plan) : jamais pendant un tour.
+	const hadController = Boolean(navigator.serviceWorker.controller);
+	navigator.serviceWorker.addEventListener('controllerchange', () => {
+		debugLog('nouvelle version installée');
+		if (hadController && !touchedSinceShown && show.phase === 'idle' && settingsEl.hidden) location.reload();
+	});
 	window.addEventListener('load', () => {
 		navigator.serviceWorker.register('sw.js').catch(() => {});
 	});

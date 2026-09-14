@@ -193,6 +193,26 @@ input[type="range"] {
 }
 
 // Informations de debug : version, commit, cache, mode d'affichage.
+.toggle-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	margin-bottom: 2px;
+	border-bottom: 1px solid rgba(243, 226, 176, .12);
+	font-size: 15px;
+	cursor: pointer;
+
+	input {
+		flex: none;
+		width: 22px;
+		height: 22px;
+		margin: 0;
+		accent-color: #d9b86c;
+	}
+}
+
 .about {
 	display: grid;
 	gap: 8px;

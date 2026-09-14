@@ -1,0 +1,16 @@
+// Journal de diagnostic, affiché uniquement avec ?debug dans l'adresse.
+#debug-log {
+	position: fixed;
+	z-index: 100;
+	top: calc(var(--safe-t) + 6px);
+	left: calc(var(--safe-l) + 6px);
+	right: calc(var(--safe-r) + 6px);
+	margin: 0;
+	padding: 8px 10px;
+	border-radius: 10px;
+	background: rgba(0, 0, 0, .75);
+	color: #9ef0b0;
+	font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+	white-space: pre-wrap;
+	pointer-events: none;
+}
