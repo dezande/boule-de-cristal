@@ -30,4 +30,4 @@ python3 -m http.server 8000      # puis http://localhost:8000
 node --test "tests/**/*.test.mjs" # tests de la logique de découpage en zones
 ```
 
-La logique « coordonnée Y → valeur » se trouve dans `index.html`, entre les marqueurs `ZONE-LOGIC:BEGIN` et `ZONE-LOGIC:END`. Les tests exécutent exactement ce code.
+Le code est réparti entre `index.html` (structure), `style.css` et `app.js`. La logique « coordonnée Y → valeur » se trouve dans `app.js`, entre les marqueurs `ZONE-LOGIC:BEGIN` et `ZONE-LOGIC:END`. Les tests exécutent exactement ce code.
