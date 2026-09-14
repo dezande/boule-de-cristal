@@ -23,7 +23,6 @@ interface Track {
 	start: number;
 	drift: number;
 	moved: boolean;
-	onBase: boolean;
 	resetTimer: number;
 	settingsTimer: number;
 }
@@ -48,7 +47,6 @@ const stage = $('#stage');
 const altar = $('#altar');
 const numberEl = $('#number');
 const numberText = $('#number-text');
-const baseEl = $<SVGSVGElement>('#base');
 const settingsEl = $('#settings');
 const zonesEl = $('#zones');
 const testbar = $('#testbar');
@@ -201,14 +199,17 @@ function hardReset(): void {
 
 /* ================= Gestes ================= */
 
+// Seul le magicien touche l'app : les spectateurs regardent l'écran mais ne le touchent
+// jamais. Les gestes sont donc pensés pour être simples à réussir pour lui, pas pour
+// résister à des manipulations de spectateurs. Par exemple, l'appui de 5 s ouvre les
+// réglages même quand un nombre est affiché.
+
 /** Appui maintenu dans le coin inférieur droit qui efface le nombre et réarme l'app. */
 const RESET_HOLD_MS = 2000;
-/** Appui maintenu sur le socle qui ouvre les réglages. */
+/** Appui maintenu n'importe où sur l'écran qui ouvre les réglages, à tout moment (seul le magicien touche l'app). */
 const SETTINGS_HOLD_MS = 5000;
 /** Glissement toléré pendant un appui maintenu, en pixels CSS. */
 const HOLD_SLOP_PX = 40;
-/** Marge autour du socle qui compte encore comme « sur le socle », en pixels CSS. */
-const BASE_HIT_PAD_PX = 24;
 let track: Track | null = null;
 
 function readSafeArea(): { right: number; bottom: number } {
@@ -220,16 +221,6 @@ function cornerSize(rect: DOMRect): { w: number; h: number } {
 	const safe = readSafeArea();
 	const side = clamp(Math.min(rect.width, rect.height) * 0.22, 80, 150);
 	return { w: side + safe.right, h: side + safe.bottom };
-}
-
-function baseHitRect(): Box {
-	const r = baseEl.getBoundingClientRect();
-	const pad = BASE_HIT_PAD_PX;
-	return { left: r.left - pad, top: r.top - pad, right: r.right + pad, bottom: r.bottom + pad };
-}
-
-function inRect(x: number, y: number, box: Box): boolean {
-	return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
 }
 
 function cancelTrackTimers(): void {
@@ -263,14 +254,13 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 		start: performance.now(),
 		drift: 0,
 		moved: false,
-		onBase: inRect(clientX, clientY, baseHitRect()),
 		resetTimer: 0,
 		settingsTimer: 0,
 	};
 	track = current;
 
-	debugLog(`posé (${Math.round(clientX)}, ${Math.round(clientY)}) ${current.onBase ? 'SUR le socle : réglages dans 5 s' : 'hors socle'}`);
-	if (current.onBase) current.settingsTimer = window.setTimeout(openSettings, SETTINGS_HOLD_MS);
+	debugLog(`posé (${Math.round(clientX)}, ${Math.round(clientY)}) : réglages dans 5 s si le doigt reste posé`);
+	current.settingsTimer = window.setTimeout(openSettings, SETTINGS_HOLD_MS);
 
 	const canReset = show.phase === 'pending' || show.phase === 'shown';
 	if (!isLocked()) {
@@ -620,8 +610,6 @@ function renderZones(): void {
 		zone.append(tag(`${ZONE_NAMES[settings.zones][b.index]} →`, settings.values[b.index]));
 		zonesEl.append(zone);
 	}
-
-	zonesEl.append(hotspot('hotspot', baseHitRect(), 'Socle : appui 5 s'));
 
 	const corner = cornerSize(rect);
 	const cornerBox = { left: rect.right - corner.w, top: rect.bottom - corner.h, right: rect.right, bottom: rect.bottom };
