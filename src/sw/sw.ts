@@ -3,7 +3,7 @@
 // Script classique (pas de module) : les service workers modules ne sont pas lus partout.
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-const CACHE = 'voyante-v3';
+const CACHE = 'voyante-v4';
 const ASSETS = [
 	'./',
 	'./index.html',
