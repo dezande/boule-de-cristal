@@ -92,6 +92,8 @@
 	</main>
 
 	<div id="version-badge" aria-hidden="true"></div>
+	<div id="hold-timer" aria-hidden="true" hidden></div>
+	<div id="menu-zone" aria-hidden="true"><span>Zone du menu : appui 3 s n'importe où</span></div>
 	<div id="dim"></div>
 	<div id="zones" hidden></div>
 
@@ -145,8 +147,13 @@
 				<div><span id="wake-text">Écran : verrou inactif</span><small id="wake-detail"></small></div>
 			</div>
 
-			<div class="card about">
+			<div class="card options">
 				<label class="toggle-row" for="show-version">Afficher la version sur la scène <input id="show-version" type="checkbox"></label>
+				<label class="toggle-row" for="show-menu-zone">Afficher la zone du menu en rouge <input id="show-menu-zone" type="checkbox"></label>
+				<label class="toggle-row" for="show-hold-timer">Afficher le chrono d'appui <input id="show-hold-timer" type="checkbox"></label>
+			</div>
+
+			<div class="card about">
 				<div class="about-row">Version <span id="about-version"></span></div>
 				<div class="about-row">Commit <span id="about-commit"></span></div>
 				<div class="about-row">Cache hors-ligne <span id="about-cache"></span></div>
@@ -162,8 +169,8 @@
 				<summary>Gestes</summary>
 				<ul>
 					<li>Toucher une bande : arme sa valeur. L'écran se verrouille aussitôt.</li>
-					<li>Appui de 2 s dans le coin inférieur droit : le nombre s'estompe, l'app se réarme.</li>
-					<li>Appui de 5 s n'importe où sur l'écran : ouvre ces réglages (efface le nombre).</li>
+					<li>Double tap n'importe où, quand un nombre est armé ou affiché : le nombre s'estompe, l'app se réarme.</li>
+					<li>Appui de 3 s n'importe où sur l'écran : ouvre ces réglages (efface le nombre).</li>
 				</ul>
 			</details>
 
@@ -171,7 +178,6 @@
 		</div>
 	</section>
 
-	<div id="safe-probe"></div>
 	<video id="keep-awake" muted playsinline webkit-playsinline loop preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1">
 		<source type="video/webm" src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwEAAAAAAAKCEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHWTbuMU6uEElTDZ1OsggEnTbuMU6uEHFO7a1OsggJs7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxMYXZmNjEuNy4xMDBXQYxMYXZmNjEuNy4xMDBEiYhAn0AAAAAAABZUrmvMrgEAAAAAAABD14EBc8WIbmYwf2A4k16cgQAitZyDdW5kiIEAhoVWX1ZQOIOBASPjg4Q7msoA4JSwgQG6gQGagQJTwIEBVbCEVbmBARJUw2dAj3Nzn2PAgGfImUWjh0VOQ09ERVJEh4xMYXZmNjEuNy4xMDBzc+pjwItjxYhuZjB/YDiTXmfIkUWjikFMUEhBX01PREVEh4ExZ8ihRaOHRU5DT0RFUkSHlExhdmM2MS4xOS4xMDAgbGlidnB4Z8ihRaOIRFVSQVRJT05Eh5MwMDowMDowMi4wMDAwMDAwMDAAH0O2dUCq54EAoNuhooEAAAAQAgCdASoBAAEAC8cIhYWImYSIP4IADA1gAP7mtQB1obSmsu6BAaWtcAIAnQEqAQABAAvHCIWFiJmEiD+CAnWqAgy9zgD+6NcfjebzWtb/G83mtWIAoMihmIED6ACxAQAvEfwAGAAwP/QMAAAA/ua1AHWhp6al7oEBpaCxAQAvEfwAGAAwP/QMAMIA/ujXH43m81rW/xvN5rViAPuC/BgcU7trkbuPs4EAt4r3gQHxggG88IED">
 		<source type="video/mp4" src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMrbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlZ0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHObWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABeW1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAATlzdGJsAAAAuXN0c2QAAAAAAAAAAQAAAKlhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MS4xOS4xMDAgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAAL2F2Y0MBQsAe/+EAFmdCwB7ZHsBEAAADAAQAAAMACDxYuSABAAZoy4BlEyAAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAAKRAAAAGwAAAAYc3R0cwAAAAAAAAABAAAAAgAAQAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAgAAAAEAAAAcc3RzegAAAAAAAAAAAAAAAgAAABAAAAALAAAAFHN0Y28AAAAAAAAAAQAAA1sAAABhdWR0YQAAAFltZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAACxpbHN0AAAAJKl0b28AAAAcZGF0YQAAAAEAAAAATGF2ZjYxLjcuMTAwAAAACGZyZWUAAAAjbWRhdAAAAAxliIQGc5yYoAAh54AAAAAHQZo4DGc6gA==">

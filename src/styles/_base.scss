@@ -75,16 +75,46 @@ input[type="text"] {
 	pointer-events: none;
 }
 
-// Sonde de lecture des safe areas.
-#safe-probe {
+// Chrono de l'appui en cours (masquable dans les réglages). Laisse passer les touchers.
+#hold-timer {
 	position: fixed;
-	top: 0;
-	left: 0;
-	width: 0;
-	height: 0;
-	padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
-	visibility: hidden;
+	z-index: 10;
+	top: calc(var(--safe-t) + 14px);
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 6px 14px;
+	border-radius: 999px;
+	background: rgba(10, 5, 22, .7);
+	border: 1px solid rgba(243, 226, 176, .25);
+	color: $gold;
+	font: 600 15px/1 $sans;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
 	pointer-events: none;
+}
+
+// Zone qui ouvre le menu par un appui de 3 s : tout l'écran, montré en rouge
+// (masquable dans les réglages). Laisse passer les touchers.
+#menu-zone {
+	position: fixed;
+	z-index: 11;
+	inset: 0;
+	border: 3px solid rgba(255, 59, 48, .8);
+	background: rgba(255, 40, 40, .08);
+	pointer-events: none;
+
+	span {
+		position: absolute;
+		left: 50%;
+		bottom: calc(var(--safe-b) + 34px);
+		transform: translateX(-50%);
+		padding: 6px 12px;
+		border-radius: 999px;
+		background: rgba(110, 0, 0, .8);
+		color: #ffd9d6;
+		font: 600 13px/1 $sans;
+		white-space: nowrap;
+	}
 }
 
 // Vidéo de repli du maintien de l'écran allumé.

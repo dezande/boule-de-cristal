@@ -192,17 +192,25 @@ input[type="range"] {
 	}
 }
 
-// Informations de debug : version, commit, cache, mode d'affichage.
+// Options d'affichage sur la scène.
+.options {
+	display: grid;
+}
+
 .toggle-row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	gap: 12px;
-	padding-bottom: 10px;
-	margin-bottom: 2px;
-	border-bottom: 1px solid rgba(243, 226, 176, .12);
+	padding: 4px 0;
 	font-size: 15px;
 	cursor: pointer;
+
+	& + & {
+		margin-top: 6px;
+		padding-top: 10px;
+		border-top: 1px solid rgba(243, 226, 176, .12);
+	}
 
 	input {
 		flex: none;
@@ -213,6 +221,7 @@ input[type="range"] {
 	}
 }
 
+// Informations de debug : version, commit, cache, mode d'affichage.
 .about {
 	display: grid;
 	gap: 8px;

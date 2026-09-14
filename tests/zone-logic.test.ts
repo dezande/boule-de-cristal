@@ -2,7 +2,7 @@
 // Lancer : npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { zoneIndexForY, valueForY, zoneBounds, isInCorner } from '../src/zone-logic.ts';
+import { zoneIndexForY, valueForY, zoneBounds } from '../src/zone-logic.ts';
 
 const VALUES = ['6', '16', '26'] as const;
 
@@ -60,11 +60,3 @@ test('entrées invalides', () => {
 	assert.equal(zoneBounds(0, 3).length, 0);
 });
 
-test('coin inférieur droit', () => {
-	assert.equal(isInCorner(390, 844, 390, 844, 100, 134), true);
-	assert.equal(isInCorner(295, 715, 390, 844, 100, 134), true);
-	assert.equal(isInCorner(285, 800, 390, 844, 100, 134), false);
-	assert.equal(isInCorner(350, 700, 390, 844, 100, 134), false);
-	assert.equal(isInCorner(350, 800, 390, 844, 100), true);
-	assert.equal(isInCorner(NaN, 800, 390, 844, 100), false);
-});

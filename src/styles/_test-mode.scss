@@ -1,6 +1,6 @@
 @use "tokens" as *;
 
-// Mode test : limites des zones, zones de gestes et barre d'état.
+// Mode test : limites des zones et barre d'état.
 
 #zones {
 	position: fixed;
@@ -49,27 +49,6 @@
 	b {
 		font: 400 18px/1 $serif;
 		margin-left: 4px;
-	}
-}
-
-.hotspot {
-	position: absolute;
-	border: 1.5px dashed rgba(170, 210, 255, .8);
-	background: rgba(120, 170, 255, .08);
-	border-radius: 14px;
-
-	.tag {
-		left: 50%;
-		bottom: calc(100% + 6px);
-		transform: translateX(-50%);
-		color: #cfe2ff;
-		border-color: rgba(170, 210, 255, .4);
-	}
-
-	&.corner .tag {
-		left: auto;
-		right: 6px;
-		transform: none;
 	}
 }
 

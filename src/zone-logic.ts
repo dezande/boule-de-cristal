@@ -33,9 +33,3 @@ export function zoneBounds(height: number, count: number): ZoneBound[] {
 	}
 	return bounds;
 }
-
-/** Le point (x, y) est-il dans le coin inférieur droit de taille cornerW × cornerH ? */
-export function isInCorner(x: number, y: number, width: number, height: number, cornerW: number, cornerH = cornerW): boolean {
-	if (![x, y, width, height, cornerW, cornerH].every(Number.isFinite)) return false;
-	return x >= width - cornerW && y >= height - cornerH;
-}

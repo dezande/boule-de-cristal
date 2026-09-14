@@ -1,4 +1,5 @@
-import { zoneIndexForY, zoneBounds, isInCorner } from './zone-logic.ts';
+import { completesResetDoubleTap, type TapRecord } from './gestures.ts';
+import { zoneIndexForY, zoneBounds } from './zone-logic.ts';
 
 /* ================= Types ================= */
 
@@ -14,6 +15,8 @@ interface Settings {
 	fade: number;
 	brightness: number;
 	showVersion: boolean;
+	showHoldTimer: boolean;
+	showMenuZone: boolean;
 }
 
 interface Track {
@@ -23,15 +26,9 @@ interface Track {
 	start: number;
 	drift: number;
 	moved: boolean;
-	resetTimer: number;
+	/** Un nombre était déjà armé ou affiché quand le doigt s'est posé. */
+	startedArmed: boolean;
 	settingsTimer: number;
-}
-
-interface Box {
-	left: number;
-	top: number;
-	right: number;
-	bottom: number;
 }
 
 /* ================= Éléments ================= */
@@ -51,9 +48,10 @@ const settingsEl = $('#settings');
 const zonesEl = $('#zones');
 const testbar = $('#testbar');
 const testState = $('#test-state');
-const safeProbe = $('#safe-probe');
 const video = $<HTMLVideoElement>('#keep-awake');
 const versionBadge = $('#version-badge');
+const holdTimerEl = $('#hold-timer');
+const menuZoneEl = $('#menu-zone');
 
 /* ================= Version ================= */
 
@@ -80,9 +78,8 @@ function debugLog(message: string): void {
 
 /* ================= Réglages ================= */
 
-
 const STORAGE_KEY = 'voyante:settings:v1';
-const DEFAULTS: Readonly<Settings> = Object.freeze({ zones: 3, values: ['6', '16', '26', '36'], delay: 3, fade: 1.5, brightness: 100, showVersion: true });
+const DEFAULTS: Readonly<Settings> = Object.freeze({ zones: 3, values: ['6', '16', '26', '36'], delay: 3, fade: 1.5, brightness: 100, showVersion: true, showHoldTimer: true, showMenuZone: true });
 const ZONE_NAMES: Record<ZoneCount, readonly string[]> = {
 	2: ['Haut', 'Bas'],
 	3: ['Haut', 'Milieu', 'Bas'],
@@ -108,6 +105,8 @@ function sanitize(raw: unknown): Settings {
 		fade: Math.round(num(src.fade, DEFAULTS.fade, 0.5, 6) * 10) / 10,
 		brightness: Math.round(num(src.brightness, DEFAULTS.brightness, 30, 100)),
 		showVersion: typeof src.showVersion === 'boolean' ? src.showVersion : DEFAULTS.showVersion,
+		showHoldTimer: typeof src.showHoldTimer === 'boolean' ? src.showHoldTimer : DEFAULTS.showHoldTimer,
+		showMenuZone: typeof src.showMenuZone === 'boolean' ? src.showMenuZone : DEFAULTS.showMenuZone,
 	};
 }
 
@@ -133,6 +132,8 @@ function applySettings(): void {
 	root.style.setProperty('--fade', `${settings.fade}s`);
 	root.style.setProperty('--dim', String((100 - settings.brightness) / 100));
 	versionBadge.hidden = !settings.showVersion;
+	if (!settings.showHoldTimer) hideHoldTimer();
+	menuZoneEl.hidden = !settings.showMenuZone;
 }
 
 /* ================= Révélation ================= */
@@ -197,37 +198,64 @@ function hardReset(): void {
 	onPhaseChange();
 }
 
+/* ================= Chrono d'appui ================= */
+
+// Compte la durée pendant laquelle le doigt reste posé, pour s'entraîner à l'appui qui ouvre les réglages.
+// Masquable dans les réglages : il apparaît aussi, brièvement, au toucher discret d'un tour.
+let holdFrame = 0;
+let holdHideTimer = 0;
+
+const formatSeconds = (ms: number): string =>
+	`${(ms / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`;
+
+function startHoldTimer(start: number): void {
+	hideHoldTimer();
+	if (!settings.showHoldTimer) return;
+	holdTimerEl.hidden = false;
+	const tick = (): void => {
+		const elapsed = performance.now() - start;
+		holdTimerEl.textContent = `${formatSeconds(elapsed)} / ${SETTINGS_HOLD_MS / 1000} s`;
+		holdFrame = requestAnimationFrame(tick);
+	};
+	tick();
+}
+
+/** Fige le chrono sur un message, puis le masque peu après. */
+function stopHoldTimer(message: string): void {
+	cancelAnimationFrame(holdFrame);
+	if (holdTimerEl.hidden) return;
+	holdTimerEl.textContent = message;
+	clearTimeout(holdHideTimer);
+	holdHideTimer = window.setTimeout(() => {
+		holdTimerEl.hidden = true;
+	}, 1500);
+}
+
+function hideHoldTimer(): void {
+	cancelAnimationFrame(holdFrame);
+	clearTimeout(holdHideTimer);
+	holdTimerEl.hidden = true;
+}
+
 /* ================= Gestes ================= */
 
 // Seul le magicien touche l'app : les spectateurs regardent l'écran mais ne le touchent
 // jamais. Les gestes sont donc pensés pour être simples à réussir pour lui, pas pour
-// résister à des manipulations de spectateurs. Par exemple, l'appui de 5 s ouvre les
-// réglages même quand un nombre est affiché.
+// résister à des manipulations de spectateurs. Par exemple, l'appui de 3 s ouvre les
+// réglages même quand un nombre est affiché, et un double tap n'importe où efface la boule.
 
-/** Appui maintenu dans le coin inférieur droit qui efface le nombre et réarme l'app. */
-const RESET_HOLD_MS = 2000;
 /** Appui maintenu n'importe où sur l'écran qui ouvre les réglages, à tout moment (seul le magicien touche l'app). */
-const SETTINGS_HOLD_MS = 5000;
+const SETTINGS_HOLD_MS = 3000;
 /** Glissement toléré pendant un appui maintenu, en pixels CSS. */
 const HOLD_SLOP_PX = 40;
 let track: Track | null = null;
-
-function readSafeArea(): { right: number; bottom: number } {
-	const style = getComputedStyle(safeProbe);
-	return { right: parseFloat(style.paddingRight) || 0, bottom: parseFloat(style.paddingBottom) || 0 };
-}
-
-function cornerSize(rect: DOMRect): { w: number; h: number } {
-	const safe = readSafeArea();
-	const side = clamp(Math.min(rect.width, rect.height) * 0.22, 80, 150);
-	return { w: side + safe.right, h: side + safe.bottom };
-}
+/** Dernier contact terminé, pour reconnaître le double tap. */
+let lastTap: TapRecord | null = null;
 
 function cancelTrackTimers(): void {
 	if (!track) return;
-	clearTimeout(track.resetTimer);
 	clearTimeout(track.settingsTimer);
-	track.resetTimer = track.settingsTimer = 0;
+	track.settingsTimer = 0;
 }
 
 function press(id: PointerId, clientX: number, clientY: number, fingers: number): void {
@@ -236,44 +264,46 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	// Plusieurs doigts : rien ne se déclenche, et tout geste en cours est abandonné.
 	if (fingers !== 1) {
 		debugLog(`toucher : ${fingers} doigts, geste annulé`);
+		stopHoldTimer('plusieurs doigts : annulé');
 		cancelTrackTimers();
 		track = null;
+		lastTap = null;
 		return;
 	}
 
+	const now = performance.now();
 	const rect = stage.getBoundingClientRect();
-	const x = clientX - rect.left;
 	const y = clientY - rect.top;
-	const corner = cornerSize(rect);
+	const armed = show.phase === 'pending' || show.phase === 'shown';
 
 	cancelTrackTimers();
 	const current: Track = {
 		id,
 		x: clientX,
 		y: clientY,
-		start: performance.now(),
+		start: now,
 		drift: 0,
 		moved: false,
-		resetTimer: 0,
+		startedArmed: armed,
 		settingsTimer: 0,
 	};
 	track = current;
 
-	debugLog(`posé (${Math.round(clientX)}, ${Math.round(clientY)}) : réglages dans 5 s si le doigt reste posé`);
+	debugLog(`posé (${Math.round(clientX)}, ${Math.round(clientY)}) : réglages dans ${SETTINGS_HOLD_MS / 1000} s si le doigt reste posé`);
 	current.settingsTimer = window.setTimeout(openSettings, SETTINGS_HOLD_MS);
+	startHoldTimer(current.start);
 
-	const canReset = show.phase === 'pending' || show.phase === 'shown';
-	if (!isLocked()) {
+	if (completesResetDoubleTap(lastTap, now, armed)) {
+		debugLog('double tap : la boule s\'efface');
+		lastTap = null;
+		current.startedArmed = false;
+		fadeOut();
+	} else if (!isLocked()) {
 		const index = zoneIndexForY(y, rect.height, settings.zones);
 		if (index >= 0) {
 			arm(index);
 			if (testMode) flashZone(index);
 		}
-	} else if (canReset && isInCorner(x, y, rect.width, rect.height, corner.w, corner.h)) {
-		current.resetTimer = window.setTimeout(() => {
-			current.resetTimer = 0;
-			fadeOut();
-		}, RESET_HOLD_MS);
 	}
 }
 
@@ -284,13 +314,17 @@ function move(id: PointerId, clientX: number, clientY: number): void {
 	if (distance > HOLD_SLOP_PX) {
 		track.moved = true;
 		cancelTrackTimers();
+		stopHoldTimer('doigt glissé : annulé');
 		debugLog(`glissé de ${Math.round(distance)} px : appui annulé`);
 	}
 }
 
 function release(id: PointerId, reason = 'levé'): void {
 	if (!track || track.id !== id) return;
-	debugLog(`${reason} après ${((performance.now() - track.start) / 1000).toFixed(1)} s, glissement max ${Math.round(track.drift)} px`);
+	const elapsed = performance.now() - track.start;
+	debugLog(`${reason} après ${(elapsed / 1000).toFixed(1)} s, glissement max ${Math.round(track.drift)} px`);
+	if (!track.moved) stopHoldTimer(reason === 'levé' ? `relâché à ${formatSeconds(elapsed)}` : 'interrompu par le système');
+	lastTap = reason === 'levé' ? { end: performance.now(), durationMs: elapsed, moved: track.moved, whileArmed: track.startedArmed } : null;
 	cancelTrackTimers();
 	track = null;
 }
@@ -448,6 +482,8 @@ const form = {
 	brightness: $<HTMLInputElement>('#brightness'),
 	brightnessOut: $<HTMLOutputElement>('#brightness-out'),
 	showVersion: $<HTMLInputElement>('#show-version'),
+	showHoldTimer: $<HTMLInputElement>('#show-hold-timer'),
+	showMenuZone: $<HTMLInputElement>('#show-menu-zone'),
 };
 const fmt = (n: number): string => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 
@@ -473,6 +509,8 @@ function renderForm(): void {
 	form.brightness.value = String(settings.brightness);
 	form.brightnessOut.textContent = `${settings.brightness} %`;
 	form.showVersion.checked = settings.showVersion;
+	form.showHoldTimer.checked = settings.showHoldTimer;
+	form.showMenuZone.checked = settings.showMenuZone;
 }
 
 function renderAbout(): void {
@@ -538,9 +576,18 @@ form.showVersion.addEventListener('change', () => {
 	settings.showVersion = form.showVersion.checked;
 	commit();
 });
+form.showHoldTimer.addEventListener('change', () => {
+	settings.showHoldTimer = form.showHoldTimer.checked;
+	commit();
+});
+form.showMenuZone.addEventListener('change', () => {
+	settings.showMenuZone = form.showMenuZone.checked;
+	commit();
+});
 
 function openSettings(): void {
 	debugLog('réglages ouverts');
+	hideHoldTimer();
 	cancelTrackTimers();
 	hardReset();
 	setTestMode(false);
@@ -586,19 +633,6 @@ function tag(label: string, value?: string): HTMLSpanElement {
 	return element;
 }
 
-function hotspot(className: string, box: Box, label: string): HTMLDivElement {
-	const spot = document.createElement('div');
-	spot.className = className;
-	Object.assign(spot.style, {
-		left: `${box.left}px`,
-		top: `${box.top}px`,
-		width: `${box.right - box.left}px`,
-		height: `${box.bottom - box.top}px`,
-	});
-	spot.append(tag(label));
-	return spot;
-}
-
 function renderZones(): void {
 	zonesEl.textContent = '';
 	const rect = stage.getBoundingClientRect();
@@ -610,12 +644,6 @@ function renderZones(): void {
 		zone.append(tag(`${ZONE_NAMES[settings.zones][b.index]} →`, settings.values[b.index]));
 		zonesEl.append(zone);
 	}
-
-	const corner = cornerSize(rect);
-	const cornerBox = { left: rect.right - corner.w, top: rect.bottom - corner.h, right: rect.right, bottom: rect.bottom };
-	const cornerSpot = hotspot('hotspot corner', cornerBox, 'Réarmer : appui 2 s');
-	cornerSpot.style.borderRadius = '14px 0 0 0';
-	zonesEl.append(cornerSpot);
 }
 
 function flashZone(index: number): void {
