@@ -27,7 +27,7 @@ Après toute modification d'un fichier, incrémentez `CACHE` dans `sw.js` pour q
 
 ```sh
 python3 -m http.server 8000      # puis http://localhost:8000
-node --test tests/               # tests de la logique de découpage en zones
+node --test "tests/**/*.test.mjs" # tests de la logique de découpage en zones
 ```
 
 La logique « coordonnée Y → valeur » se trouve dans `index.html`, entre les marqueurs `ZONE-LOGIC:BEGIN` et `ZONE-LOGIC:END`. Les tests exécutent exactement ce code.

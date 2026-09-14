@@ -20,7 +20,7 @@ jobs:
           node-version: 24
 
       - name: Tests de la logique des zones
-        run: node --test tests/
+        run: node --test "tests/**/*.test.mjs"
 
       - name: Vérification du manifest et du cache hors-ligne
         run: |

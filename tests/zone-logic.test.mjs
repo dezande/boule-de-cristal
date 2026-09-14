@@ -1,5 +1,5 @@
 // Tests de la logique de découpage en zones, extraite telle quelle de index.html.
-// Lancer : node --test tests/
+// Lancer : node --test "tests/**/*.test.mjs"
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
