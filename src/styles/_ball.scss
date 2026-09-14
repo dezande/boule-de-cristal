@@ -1,0 +1,307 @@
+@use "tokens" as *;
+@use "mixins" as *;
+
+// Autel : halo, sol, boule et socle, centrés dans la safe area.
+.altar {
+	--mist-t: 2s;
+	position: absolute;
+	left: 50%;
+	top: calc(50% + (var(--safe-t) - var(--safe-b)) / 2);
+	transform: translate(-50%, -50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	&.instant,
+	&.instant * {
+		transition: none !important;
+	}
+}
+
+/* ---------- Halos ---------- */
+
+.halo,
+.halo-warm {
+	position: absolute;
+	left: 50%;
+	top: calc(var(--ball) * .5);
+	width: calc(var(--ball) * 2.1);
+	height: calc(var(--ball) * 2.1);
+	border-radius: 50%;
+	pointer-events: none;
+	transform: translate(-50%, -50%);
+}
+
+.halo {
+	background: radial-gradient(circle, rgba(140, 100, 235, .36) 0%, rgba(96, 60, 190, .18) 30%, rgba(60, 30, 130, .07) 48%, transparent 66%);
+	opacity: .7;
+	transition: opacity var(--mist-t) ease-out;
+	animation: breathe 9s ease-in-out infinite;
+
+	.altar.stirring & {
+		opacity: 1;
+		transition-timing-function: ease-in;
+	}
+}
+
+.halo-warm {
+	background: radial-gradient(circle, rgba(255, 214, 140, .16) 0%, rgba(255, 190, 110, .06) 32%, transparent 55%);
+	opacity: 0;
+	transition: opacity var(--mist-t) ease-in-out;
+
+	.altar.revealed & {
+		opacity: 1;
+	}
+}
+
+@keyframes breathe {
+	0%,
+	100% { transform: translate(-50%, -50%) scale(1); }
+	50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+.floor {
+	position: absolute;
+	left: 50%;
+	bottom: calc(var(--ball) * -.1);
+	width: calc(var(--ball) * 1.7);
+	height: calc(var(--ball) * .36);
+	transform: translateX(-50%);
+	border-radius: 50%;
+	pointer-events: none;
+	background:
+		radial-gradient(ellipse 34% 26% at 50% 58%, rgba(0, 0, 0, .75), transparent 100%),
+		radial-gradient(ellipse at 50% 50%, rgba(110, 80, 200, .2) 0%, rgba(40, 20, 80, .12) 42%, transparent 70%);
+}
+
+/* ---------- Boule ---------- */
+
+.ball {
+	position: relative;
+	z-index: 2;
+	width: var(--ball);
+	height: var(--ball);
+	border-radius: 50%;
+	box-shadow:
+		0 0 calc(var(--ball) * .07) rgba(120, 90, 220, .28),
+		0 calc(var(--ball) * .05) calc(var(--ball) * .12) rgba(0, 0, 0, .6);
+}
+
+.globe {
+	@include cover;
+	border-radius: 50%;
+	overflow: hidden;
+	-webkit-clip-path: circle(50% at 50% 50%);
+	clip-path: circle(50% at 50% 50%);
+	transform: translateZ(0);
+	background: radial-gradient(circle at 50% 58%, #22144a 0%, #140a33 38%, #0a0419 66%, #030107 100%);
+
+	> * {
+		@include cover;
+		border-radius: 50%;
+		pointer-events: none;
+	}
+
+	// Reflets du verre.
+	> .arc {
+		inset: 3.5%;
+		background: radial-gradient(circle, transparent 64%, rgba(255, 255, 255, .15) 68.5%, transparent 71%);
+		@include mask-image(linear-gradient(140deg, #000 18%, transparent 48%));
+	}
+
+	> .arc-low {
+		inset: 5%;
+		background: radial-gradient(circle, transparent 63%, rgba(190, 160, 255, .12) 68%, transparent 71%);
+		@include mask-image(linear-gradient(320deg, #000 15%, transparent 40%));
+	}
+
+	> .specular {
+		inset: auto;
+		left: 17%;
+		top: 10%;
+		width: 34%;
+		height: 22%;
+		transform: rotate(-38deg);
+		background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, .78) 0%, rgba(255, 255, 255, .32) 30%, rgba(255, 255, 255, .06) 60%, transparent 72%);
+		filter: blur(calc(var(--ball) * .006));
+	}
+
+	> .glint {
+		inset: auto;
+		left: 25.5%;
+		top: 17%;
+		width: 7%;
+		height: 4.2%;
+		transform: rotate(-38deg);
+		background: radial-gradient(ellipse, #fff 0%, rgba(255, 255, 255, .7) 40%, transparent 72%);
+	}
+}
+
+/* ---------- Brume : couches en rotation lente, en permanence ---------- */
+
+.mist-wrap {
+	opacity: .8;
+	transform: scale(1);
+	transition: opacity var(--mist-t) ease-out, transform var(--mist-t) ease-in-out;
+
+	&.front {
+		opacity: .65;
+
+		.altar.stirring & {
+			opacity: 1;
+		}
+	}
+
+	.altar.stirring & {
+		opacity: 1;
+		transform: scale(1.07);
+		transition-timing-function: ease-in, ease-in-out;
+	}
+}
+
+.mist {
+	position: absolute;
+	inset: -30%;
+	border-radius: 50%;
+	will-change: transform;
+}
+
+.m1 {
+	background:
+		radial-gradient(30% 16% at 34% 42%, rgba(175, 145, 255, .8), transparent 70%),
+		radial-gradient(24% 13% at 64% 60%, rgba(120, 85, 225, .85), transparent 72%),
+		radial-gradient(14% 22% at 52% 30%, rgba(215, 195, 255, .5), transparent 70%),
+		radial-gradient(20% 10% at 44% 70%, rgba(190, 160, 255, .45), transparent 70%);
+	filter: blur(calc(var(--ball) * .028));
+	opacity: .9;
+	transform-origin: 47% 53%;
+	animation: swirl 41s linear infinite;
+}
+
+.m2 {
+	background:
+		radial-gradient(18% 32% at 60% 36%, rgba(225, 200, 255, .5), transparent 70%),
+		radial-gradient(32% 14% at 38% 68%, rgba(255, 214, 160, .26), transparent 70%),
+		radial-gradient(16% 16% at 72% 72%, rgba(150, 110, 240, .6), transparent 70%);
+	filter: blur(calc(var(--ball) * .045));
+	opacity: .75;
+	transform-origin: 54% 48%;
+	animation: swirl 63s linear infinite reverse;
+}
+
+.m3 {
+	background: conic-gradient(from 20deg at 50% 50%,
+		transparent 0deg, rgba(190, 165, 255, .45) 40deg, transparent 95deg,
+		rgba(160, 130, 250, .38) 170deg, transparent 230deg,
+		rgba(220, 200, 255, .4) 290deg, transparent 340deg);
+	@include mask-image(radial-gradient(circle, transparent 8%, #000 30%, #000 45%, transparent 62%));
+	filter: blur(calc(var(--ball) * .05));
+	opacity: .6;
+	animation: spin 97s linear infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+@keyframes swirl {
+	0% { transform: rotate(0deg) scale(1); }
+	50% { transform: rotate(180deg) scale(1.12); }
+	100% { transform: rotate(360deg) scale(1); }
+}
+
+.inner-glow {
+	background: radial-gradient(circle at 50% 52%, rgba(200, 175, 255, .42) 0%, rgba(150, 115, 240, .16) 32%, transparent 60%);
+	opacity: 0;
+	transition: opacity var(--mist-t) ease-out;
+
+	.altar.stirring & {
+		opacity: .9;
+		transition-timing-function: ease-in;
+	}
+}
+
+.warm-glow {
+	background: radial-gradient(circle at 50% 52%, rgba(255, 222, 160, .2) 0%, rgba(255, 200, 130, .07) 34%, transparent 58%);
+	opacity: 0;
+	transition: opacity var(--mist-t) ease-in-out;
+
+	.altar.revealed & {
+		opacity: 1;
+	}
+}
+
+/* ---------- Le nombre, qui émerge de la brume ---------- */
+
+.number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: $serif;
+	font-weight: 400;
+	font-size: calc(var(--ball) * var(--num-k, .42));
+	font-variant-numeric: lining-nums;
+	line-height: 1;
+	letter-spacing: .01em;
+	white-space: nowrap;
+	color: $gold-bright;
+	opacity: 0;
+	filter: blur(calc(var(--ball) * .035));
+	transform: scale(.88);
+	transition:
+		opacity var(--fade) cubic-bezier(.45, 0, .35, 1),
+		filter var(--fade) cubic-bezier(.2, .6, .3, 1),
+		transform calc(var(--fade) * 1.3) cubic-bezier(.2, .6, .3, 1);
+
+	&.shown {
+		opacity: 1;
+		filter: blur(0);
+		transform: scale(1);
+	}
+
+	span {
+		display: block;
+		padding-top: .06em;
+		text-shadow:
+			0 0 .04em rgba(255, 244, 214, .95),
+			0 0 .14em rgba(255, 210, 130, .6),
+			0 0 .38em rgba(230, 170, 90, .35),
+			0 0 .8em rgba(170, 120, 255, .3);
+		animation: float 7s ease-in-out infinite;
+	}
+}
+
+@keyframes float {
+	0%,
+	100% { transform: translateY(0); }
+	50% { transform: translateY(-1.5%); }
+}
+
+/* ---------- Verre : ombrage, réfraction, liseré ---------- */
+
+.shade {
+	background: radial-gradient(circle at 46% 40%, transparent 50%, rgba(8, 3, 20, .35) 72%, rgba(2, 0, 8, .85) 100%);
+	box-shadow:
+		inset 0 0 calc(var(--ball) * .03) rgba(210, 190, 255, .18),
+		inset calc(var(--ball) * -.04) calc(var(--ball) * -.06) calc(var(--ball) * .1) rgba(0, 0, 0, .55);
+}
+
+.refract {
+	background: radial-gradient(70% 30% at 55% 95%, rgba(190, 160, 255, .34), transparent 70%);
+}
+
+.rimline {
+	box-shadow: inset 0 0 0 1px rgba(220, 205, 255, .1);
+}
+
+/* ---------- Socle ---------- */
+
+.base {
+	position: relative;
+	z-index: 3;
+	display: block;
+	width: calc(var(--ball) * .8);
+	height: calc(var(--ball) * .4);
+	margin-top: calc(var(--ball) * -.13);
+	overflow: visible;
+}

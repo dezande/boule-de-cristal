@@ -1,0 +1,12 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["es2022", "dom", "dom.iterable"],
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"rewriteRelativeImportExtensions": true,
+		"rootDir": ".",
+		"outDir": "../dist"
+	},
+	"include": ["*.ts"]
+}

@@ -1,0 +1,111 @@
+@use "tokens" as *;
+
+// Mode test : limites des zones, zones de gestes et barre d'état.
+
+#zones {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	pointer-events: none;
+}
+
+.zone {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 1px dashed rgba(243, 226, 176, .6);
+	background: rgba(243, 226, 176, .035);
+
+	&:first-child {
+		border-top: none;
+	}
+
+	&.hit {
+		animation: hit 1s ease-out;
+	}
+
+	.tag {
+		left: calc(12px + var(--safe-l));
+		top: 50%;
+		transform: translateY(-50%);
+	}
+}
+
+@keyframes hit {
+	from { background: rgba(243, 226, 176, .3); }
+	to { background: rgba(243, 226, 176, .035); }
+}
+
+.tag {
+	position: absolute;
+	font: 600 12px/1.2 -apple-system, system-ui, sans-serif;
+	color: $gold;
+	background: rgba(10, 5, 22, .8);
+	border: 1px solid rgba(243, 226, 176, .3);
+	padding: 5px 10px;
+	border-radius: 999px;
+	white-space: nowrap;
+
+	b {
+		font: 400 18px/1 $serif;
+		margin-left: 4px;
+	}
+}
+
+.hotspot {
+	position: absolute;
+	border: 1.5px dashed rgba(170, 210, 255, .8);
+	background: rgba(120, 170, 255, .08);
+	border-radius: 14px;
+
+	.tag {
+		left: 50%;
+		bottom: calc(100% + 6px);
+		transform: translateX(-50%);
+		color: #cfe2ff;
+		border-color: rgba(170, 210, 255, .4);
+	}
+
+	&.corner .tag {
+		left: auto;
+		right: 6px;
+		transform: none;
+	}
+}
+
+#testbar {
+	position: fixed;
+	z-index: 40;
+	left: 50%;
+	top: calc(var(--safe-t) + 10px);
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px;
+	border-radius: 999px;
+	background: rgba(12, 6, 26, .9);
+	border: 1px solid rgba(243, 226, 176, .25);
+	font: 13px/1 -apple-system, system-ui, sans-serif;
+	color: $gold;
+	white-space: nowrap;
+	touch-action: none;
+
+	.state {
+		padding: 0 8px;
+		min-width: 8.5em;
+		opacity: .9;
+	}
+
+	button {
+		font-family: inherit;
+		color: $gold;
+		background: rgba(255, 255, 255, .05);
+		border: 1px solid $gold-soft;
+		cursor: pointer;
+		min-height: 34px;
+		padding: 0 14px;
+		border-radius: 999px;
+		font-size: 13px;
+	}
+}

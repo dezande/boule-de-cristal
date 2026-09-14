@@ -21,13 +21,26 @@ L'app doit être servie en HTTPS (GitHub Pages convient ; tous les chemins sont 
 
 Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
-Après toute modification d'un fichier, incrémentez `CACHE` dans `sw.js` pour que les appareils déjà installés récupèrent la nouvelle version.
+Pour publier une nouvelle version, incrémentez `CACHE` dans `src/sw/sw.ts`, sinon les appareils où l'app est déjà installée gardent l'ancienne. Poussez ensuite sur `main` : GitHub Actions vérifie les types, lance les tests, compile puis déploie sur GitHub Pages.
 
 ## Développement
 
+Il faut Node 24 ou plus récent. TypeScript et Sass servent uniquement au build : l'app publiée n'a aucune dépendance.
+
 ```sh
-python3 -m http.server 8000      # puis http://localhost:8000
-node --test "tests/**/*.test.mjs" # tests de la logique de découpage en zones
+npm install
+npm run serve       # build puis http://localhost:8000
+npm test            # tests de la logique des zones
+npm run typecheck   # vérification des types
+npm run build       # génère dist/
 ```
 
-Le code est réparti entre `index.html` (structure), `style.css` et `app.js`. La logique « coordonnée Y → valeur » se trouve dans `app.js`, entre les marqueurs `ZONE-LOGIC:BEGIN` et `ZONE-LOGIC:END`. Les tests exécutent exactement ce code.
+| Dossier | Contenu |
+| --- | --- |
+| `public/` | `index.html`, manifest et icônes, copiés tels quels |
+| `src/app.ts` | Scène, gestes, réglages, maintien de l'écran allumé |
+| `src/zone-logic.ts` | Logique pure « coordonnée Y → valeur », testée sous Node |
+| `src/sw/sw.ts` | Service worker (cache hors-ligne) |
+| `src/styles/` | Styles Sass, compilés en `dist/style.css` |
+| `tests/` | Tests unitaires TypeScript (`node --test`) |
+| `scripts/check-dist.ts` | Vérifie que le build contient tout ce que le service worker met en cache |

@@ -1,19 +1,10 @@
-// Tests de la logique de découpage en zones, extraite telle quelle de app.js.
-// Lancer : node --test "tests/**/*.test.mjs"
+// Tests de la logique de découpage en zones (src/zone-logic.ts).
+// Lancer : npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
+import { zoneIndexForY, valueForY, zoneBounds, isInCorner } from '../src/zone-logic.ts';
 
-const source = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
-const match = source.match(/\/\* ZONE-LOGIC:BEGIN \*\/([\s\S]*?)\/\* ZONE-LOGIC:END \*\//);
-assert.ok(match, 'bloc ZONE-LOGIC introuvable dans app.js');
-
-const sandbox = {};
-vm.runInNewContext(match[1], sandbox);
-const { zoneIndexForY, valueForY, zoneBounds, isInCorner } = sandbox.ZoneLogic;
-
-const VALUES = ['6', '16', '26'];
+const VALUES = ['6', '16', '26'] as const;
 
 test('tiers supérieur, central, inférieur', () => {
 	const h = 900;
@@ -66,7 +57,6 @@ test('entrées invalides', () => {
 	assert.equal(zoneIndexForY(10, 800, 0), -1);
 	assert.equal(zoneIndexForY(10, 800, 2.5), -1);
 	assert.equal(valueForY(10, 800, []), null);
-	assert.equal(valueForY(10, 800, null), null);
 	assert.equal(zoneBounds(0, 3).length, 0);
 });
 

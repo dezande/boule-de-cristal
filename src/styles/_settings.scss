@@ -1,0 +1,215 @@
+@use "tokens" as *;
+
+// Panneau de réglages caché.
+
+#settings {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	justify-content: center;
+	background: radial-gradient(ellipse at 50% 0%, rgba(60, 30, 110, .6), rgba(5, 2, 11, .97) 70%), $bg;
+	color: rgba(240, 232, 255, .9);
+}
+
+.sheet {
+	width: 100%;
+	max-width: 520px;
+	height: 100%;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	touch-action: pan-y;
+	padding: calc(var(--safe-t) + 24px) calc(var(--safe-r) + 18px) calc(var(--safe-b) + 32px) calc(var(--safe-l) + 18px);
+
+	h1 {
+		margin: 0;
+		font: 400 30px/1.1 $serif;
+		letter-spacing: .02em;
+		color: $gold-bright;
+	}
+
+	.sub {
+		margin: 6px 0 20px;
+		font-size: 13px;
+		color: rgba(230, 215, 255, .55);
+	}
+
+	button {
+		min-height: 46px;
+		border-radius: 12px;
+		font-family: inherit;
+		font-size: 15px;
+		color: $gold;
+		background: rgba(255, 255, 255, .05);
+		border: 1px solid $gold-soft;
+		cursor: pointer;
+
+		&.primary {
+			border-color: transparent;
+			background: linear-gradient(180deg, #e7cc8e, #b8913f);
+			color: $ink;
+			font-weight: 600;
+		}
+
+		&.link {
+			width: 100%;
+			margin-top: 6px;
+			border: none;
+			background: none;
+			color: rgba(235, 225, 255, .45);
+			font-size: 13px;
+			text-decoration: underline;
+		}
+	}
+}
+
+.card {
+	margin-bottom: 12px;
+	padding: 16px;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, .035);
+	border: 1px solid rgba(243, 226, 176, .12);
+}
+
+.row-label {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+	margin-bottom: 10px;
+	font-size: 15px;
+
+	small {
+		color: rgba(230, 215, 255, .5);
+		font-size: 12px;
+	}
+}
+
+output {
+	color: $gold;
+	font-variant-numeric: tabular-nums;
+}
+
+// Choix du nombre de zones.
+.seg {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 6px;
+	padding: 4px;
+	border-radius: 12px;
+	background: rgba(0, 0, 0, .3);
+
+	.sheet & button {
+		border-color: transparent;
+		background: transparent;
+		font: 400 22px/1 $serif;
+		min-height: 42px;
+
+		&[aria-checked="true"] {
+			background: linear-gradient(#3a2560, #241540);
+			color: $gold-bright;
+			box-shadow: inset 0 0 0 1px rgba(243, 226, 176, .4);
+		}
+	}
+}
+
+.values {
+	display: grid;
+	gap: 8px;
+}
+
+.value-row {
+	display: grid;
+	grid-template-columns: 1fr 112px;
+	align-items: center;
+	gap: 12px;
+
+	label {
+		font-size: 15px;
+		color: rgba(240, 232, 255, .8);
+	}
+
+	input {
+		width: 100%;
+		padding: 9px 8px;
+		border-radius: 10px;
+		border: 1px solid rgba(243, 226, 176, .22);
+		background: rgba(0, 0, 0, .35);
+		color: $gold-bright;
+		font: 400 24px/1 $serif;
+		text-align: center;
+		outline: none;
+
+		&:focus {
+			border-color: rgba(243, 226, 176, .6);
+		}
+	}
+}
+
+input[type="range"] {
+	width: 100%;
+	height: 32px;
+	margin: 0;
+	accent-color: #d9b86c;
+}
+
+// État du maintien de l'écran allumé.
+.status {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 15px;
+
+	small {
+		display: block;
+		margin-top: 3px;
+		font-size: 12px;
+		color: rgba(230, 215, 255, .5);
+	}
+}
+
+@mixin dot-color($color, $glow) {
+	background: $color;
+	box-shadow: 0 0 10px $glow;
+}
+
+.dot {
+	flex: none;
+	width: 11px;
+	height: 11px;
+	border-radius: 50%;
+	background: #6b5a7a;
+	box-shadow: 0 0 0 3px rgba(107, 90, 122, .2);
+
+	&.lock {
+		@include dot-color(#7fe0a0, rgba(127, 224, 160, .7));
+	}
+
+	&.video {
+		@include dot-color(#f0c36a, rgba(240, 195, 106, .6));
+	}
+}
+
+.actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+	margin: 18px 0 14px;
+}
+
+.help {
+	font-size: 14px;
+	color: rgba(235, 225, 255, .75);
+
+	summary {
+		cursor: pointer;
+	}
+
+	ul {
+		margin: 10px 0 0;
+		padding-left: 18px;
+		font-size: 13px;
+		line-height: 1.6;
+	}
+}

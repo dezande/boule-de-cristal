@@ -1,0 +1,87 @@
+@use "tokens" as *;
+@use "mixins" as *;
+
+:root {
+	--ball: min(74vw, 42vh, 520px);
+	--fade: 1.5s;
+	--dim: 0;
+	--safe-t: env(safe-area-inset-top, 0px);
+	--safe-r: env(safe-area-inset-right, 0px);
+	--safe-b: env(safe-area-inset-bottom, 0px);
+	--safe-l: env(safe-area-inset-left, 0px);
+}
+
+@supports (height: 1svh) {
+	:root {
+		--ball: min(74vw, 42svh, 520px);
+	}
+}
+
+// Hygiène tactile : ni surbrillance, ni callout, ni sélection.
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	@include user-select(none);
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+	overflow: hidden;
+	overscroll-behavior: none;
+	background: $bg;
+	color: $gold;
+}
+
+body {
+	position: fixed;
+	inset: 0;
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+	font-family: $sans;
+}
+
+input[type="text"] {
+	@include user-select(text);
+}
+
+[hidden] {
+	display: none !important;
+}
+
+// Voile de luminosité, piloté par --dim.
+#dim {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	background: #000;
+	opacity: var(--dim);
+	pointer-events: none;
+}
+
+// Sonde de lecture des safe areas.
+#safe-probe {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 0;
+	height: 0;
+	padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+	visibility: hidden;
+	pointer-events: none;
+}
+
+// Vidéo de repli du maintien de l'écran allumé.
+#keep-awake {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 1px;
+	height: 1px;
+	opacity: .01;
+	pointer-events: none;
+}

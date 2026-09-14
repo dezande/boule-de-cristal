@@ -1,0 +1,14 @@
+@mixin cover {
+	position: absolute;
+	inset: 0;
+}
+
+@mixin mask-image($value) {
+	-webkit-mask-image: $value;
+	mask-image: $value;
+}
+
+@mixin user-select($value) {
+	-webkit-user-select: $value;
+	user-select: $value;
+}

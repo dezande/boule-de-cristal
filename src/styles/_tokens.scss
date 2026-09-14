@@ -1,0 +1,12 @@
+// Couleurs et typographies, figées à la compilation.
+// Les valeurs modifiées à l'exécution (--ball, --fade, --dim, --mist-t…) restent
+// des propriétés CSS personnalisées : voir _base.scss et app.ts.
+
+$bg: #05020b;
+$gold: #f3e2b0;
+$gold-bright: #f6e6b6;
+$gold-soft: rgba(243, 226, 176, .25);
+$ink: #1a0e05;
+
+$serif: "Didot", "Bodoni 72", "Bodoni MT", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Noto Serif Display", "Noto Serif", Georgia, serif;
+$sans: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;

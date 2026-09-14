@@ -1,34 +1,39 @@
 /* Service worker : tout est mis en cache à l'installation, puis servi hors-ligne. */
-const CACHE = 'voyante-v2';
+
+// Script classique (pas de module) : les service workers modules ne sont pas lus partout.
+const sw = self as unknown as ServiceWorkerGlobalScope;
+
+const CACHE = 'voyante-v3';
 const ASSETS = [
 	'./',
 	'./index.html',
 	'./style.css',
 	'./app.js',
+	'./zone-logic.js',
 	'./manifest.json',
 	'./icons/icon-192.png',
 	'./icons/icon-512.png',
 ];
 
-self.addEventListener('install', (event) => {
+sw.addEventListener('install', (event) => {
 	event.waitUntil(
 		caches.open(CACHE)
 			.then((cache) => cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' }))))
-			.then(() => self.skipWaiting())
+			.then(() => sw.skipWaiting())
 	);
 });
 
-self.addEventListener('activate', (event) => {
+sw.addEventListener('activate', (event) => {
 	event.waitUntil(
 		caches.keys()
 			.then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
-			.then(() => self.clients.claim())
+			.then(() => sw.clients.claim())
 	);
 });
 
-self.addEventListener('fetch', (event) => {
+sw.addEventListener('fetch', (event) => {
 	const { request } = event;
-	if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+	if (request.method !== 'GET' || new URL(request.url).origin !== sw.location.origin) return;
 
 	event.respondWith((async () => {
 		const cache = await caches.open(CACHE);
