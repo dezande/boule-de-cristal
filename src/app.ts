@@ -56,6 +56,9 @@ const video = $<HTMLVideoElement>('#keep-awake');
 
 /* ================= Réglages ================= */
 
+// Remplacés au build par scripts/stamp-build.ts ; affichés dans les réglages.
+const BUILD = { version: '__APP_VERSION__', commit: '__APP_COMMIT__' };
+
 const STORAGE_KEY = 'voyante:settings:v1';
 const DEFAULTS: Readonly<Settings> = Object.freeze({ zones: 3, values: ['6', '16', '26', '36'], delay: 3, fade: 1.5, brightness: 100 });
 const ZONE_NAMES: Record<ZoneCount, readonly string[]> = {
@@ -448,6 +451,28 @@ function renderForm(): void {
 	form.brightnessOut.textContent = `${settings.brightness} %`;
 }
 
+function renderAbout(): void {
+	$('#about-version').textContent = BUILD.version;
+	$('#about-commit').textContent = BUILD.commit;
+
+	const standalone = matchMedia('(display-mode: standalone)').matches
+		|| (navigator as Navigator & { standalone?: boolean }).standalone === true;
+	$('#about-display').textContent = standalone ? 'app installée' : 'navigateur';
+
+	const cacheEl = $('#about-cache');
+	if (!('caches' in window)) {
+		cacheEl.textContent = 'indisponible';
+		return;
+	}
+	caches.keys()
+		.then((keys) => {
+			cacheEl.textContent = keys.filter((key) => key.startsWith('voyante-')).join(', ') || 'pas encore installé';
+		})
+		.catch(() => {
+			cacheEl.textContent = 'indisponible';
+		});
+}
+
 function commit(): void {
 	settings = sanitize(settings);
 	saveSettings();
@@ -492,6 +517,7 @@ function openSettings(): void {
 	hardReset();
 	setTestMode(false);
 	renderForm();
+	renderAbout();
 	settingsEl.hidden = false;
 	$('.sheet', settingsEl).scrollTop = 0;
 }

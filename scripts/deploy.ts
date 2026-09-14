@@ -1,16 +1,14 @@
-// Déploiement : vérifie le dépôt, incrémente la version du cache hors-ligne,
-// lance types, tests et build, pousse sur main, puis suit GitHub Actions
-// jusqu'à la mise en ligne.
+// Déploiement : le déploiement lui-même est fait par GitHub Actions à chaque push
+// sur main. Ce script vérifie tout en local avant de pousser, pousse, puis suit
+// l'exécution jusqu'à la mise en ligne.
 //
 // Usage : npm run deploy
-//         npm run deploy -- --dry-run   (vérifications et build, sans commit ni push)
+//         npm run deploy -- --dry-run   (vérifications et build, sans push)
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 const BRANCH = 'main';
 const WORKFLOW = 'ci.yml';
-const SW_FILE = 'src/sw/sw.ts';
-const CACHE_PATTERN = /const CACHE = 'voyante-v(\d+)';/;
 const dryRun = process.argv.includes('--dry-run');
 
 function fail(message: string): never {
@@ -62,20 +60,14 @@ if (output('git', ['status', '--porcelain'])) {
 run('git', ['fetch', '--quiet', 'origin', BRANCH]);
 const behind = Number(output('git', ['rev-list', '--count', `HEAD..origin/${BRANCH}`]));
 if (behind > 0) fail(`La branche locale a ${behind} commit(s) de retard sur origin/${BRANCH} : faites « git pull » d'abord.`);
-console.log(`Branche ${BRANCH} propre et à jour.`);
+const ahead = Number(output('git', ['rev-list', '--count', `origin/${BRANCH}..HEAD`]));
+if (ahead === 0 && !dryRun) {
+	console.log(`\nRien à déployer : ${BRANCH} est déjà à jour sur GitHub.`);
+	process.exit(0);
+}
+console.log(`${ahead} commit(s) à publier.`);
 
-/* ---------- 2. Version du cache hors-ligne ---------- */
-
-step('Version du cache hors-ligne');
-const swSource = readFileSync(SW_FILE, 'utf8');
-const cacheMatch = swSource.match(CACHE_PATTERN);
-if (!cacheMatch) fail(`Déclaration « const CACHE = 'voyante-vN'; » introuvable dans ${SW_FILE}.`);
-const version = Number(cacheMatch[1]) + 1;
-const cacheName = `voyante-v${version}`;
-writeFileSync(SW_FILE, swSource.replace(CACHE_PATTERN, `const CACHE = '${cacheName}';`));
-console.log(`voyante-v${version - 1} → ${cacheName}`);
-
-/* ---------- 3. Types, tests, build ---------- */
+/* ---------- 2. Types, tests, build ---------- */
 
 try {
 	step('Vérification des types');
@@ -85,25 +77,23 @@ try {
 	step('Build');
 	run('npm', ['run', '--silent', 'build']);
 } catch {
-	writeFileSync(SW_FILE, swSource);
-	fail('Vérifications en échec : version du cache restaurée, rien n\'a été commité ni poussé.');
+	fail('Vérifications en échec : rien n\'a été poussé.');
 }
 
+const cacheName = readFileSync('dist/sw.js', 'utf8').match(/const CACHE = '([^']+)'/)?.[1];
+if (!cacheName) fail('Nom du cache introuvable dans dist/sw.js.');
+
 if (dryRun) {
-	writeFileSync(SW_FILE, swSource);
-	console.log(`\n✓ Simulation réussie. Version du cache restaurée ; rien n'a été commité ni poussé.`);
+	console.log(`\n✓ Simulation réussie (cache ${cacheName}). Rien n'a été poussé.`);
 	process.exit(0);
 }
 
-/* ---------- 4. Commit et push ---------- */
+/* ---------- 3. Push : GitHub Actions prend le relais ---------- */
 
-step('Commit et push');
-run('git', ['commit', '--quiet', '-m', `Déploiement : cache ${cacheName}`, '--', SW_FILE]);
+step('Push');
 run('git', ['push', '--quiet', 'origin', BRANCH]);
 const sha = output('git', ['rev-parse', 'HEAD']);
 console.log(`Poussé : ${sha.slice(0, 7)}`);
-
-/* ---------- 5. Suivi de GitHub Actions et vérification en ligne ---------- */
 
 if (!hasCommand('gh')) {
 	console.log('\nGitHub CLI (gh) absent : suivez le déploiement dans l\'onglet Actions du dépôt.');

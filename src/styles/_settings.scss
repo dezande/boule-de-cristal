@@ -1,4 +1,5 @@
 @use "tokens" as *;
+@use "mixins" as *;
 
 // Panneau de réglages caché.
 
@@ -188,6 +189,30 @@ input[type="range"] {
 
 	&.video {
 		@include dot-color(#f0c36a, rgba(240, 195, 106, .6));
+	}
+}
+
+// Informations de debug : version, commit, cache, mode d'affichage.
+.about {
+	display: grid;
+	gap: 8px;
+}
+
+.about-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+	font-size: 14px;
+	color: rgba(240, 232, 255, .8);
+
+	span {
+		@include user-select(text);
+		color: $gold;
+		font-size: 13px;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+		overflow-wrap: anywhere;
 	}
 }
 

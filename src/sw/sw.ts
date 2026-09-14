@@ -3,7 +3,10 @@
 // Script classique (pas de module) : les service workers modules ne sont pas lus partout.
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-const CACHE = 'voyante-v4';
+// __BUILD_HASH__ est remplacé au build par une empreinte du contenu de l'app
+// (scripts/stamp-build.ts) : chaque modification publiée renomme le cache, ce qui
+// met à jour les appareils où l'app est installée.
+const CACHE = 'voyante-__BUILD_HASH__';
 const ASSETS = [
 	'./',
 	'./index.html',

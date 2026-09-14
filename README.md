@@ -10,7 +10,7 @@ Accessoire de scène : une PWA mono-page, 100 % hors-ligne, qui fait apparaître
 | Appui de **2 s** dans le coin inférieur droit | Le nombre s'estompe, l'app se réarme |
 | **3 tapotements** sur le socle, puis **appui de 1 s** | Ouvre les réglages (et efface le nombre) |
 
-Les réglages permettent de changer le nombre de zones (2, 3 ou 4), les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Ils affichent aussi l'état du maintien de l'écran allumé. Le bouton **Test des zones** montre les limites des zones pour répéter.
+Les réglages permettent de changer le nombre de zones (2, 3 ou 4), les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
 
 ## Installation
 
@@ -21,14 +21,20 @@ L'app doit être servie en HTTPS (GitHub Pages convient ; tous les chemins sont 
 
 Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
-Pour publier une nouvelle version, commitez vos modifications puis lancez :
+## Publication
+
+**Chaque push sur `main` met l'app à jour.** GitHub Actions vérifie les types, lance les tests et compile. Si tout passe, il déploie sur GitHub Pages ; sinon, rien n'est publié.
+
+Le nom du cache hors-ligne est calculé au build à partir du contenu de l'app. Il n'y a donc rien à incrémenter à la main : dès qu'un fichier de l'app change, les téléphones où elle est installée récupèrent la nouvelle version à la prochaine ouverture avec du réseau.
+
+Pour publier en suivant le déploiement depuis le terminal :
 
 ```sh
-npm run deploy              # déploiement réel
-npm run deploy -- --dry-run # simulation : vérifications et build, sans commit ni push
+npm run deploy              # vérifie en local, pousse, suit GitHub Actions et contrôle le site
+npm run deploy -- --dry-run # vérifications et build seulement, sans push
 ```
 
-Le script vérifie que `main` est propre et à jour. Il incrémente ensuite `CACHE` dans `src/sw/sw.ts`, pour que les appareils où l'app est déjà installée récupèrent la nouvelle version. Il lance la vérification des types, les tests et le build, commite et pousse. Enfin, il suit GitHub Actions jusqu'au déploiement sur GitHub Pages et vérifie que le site sert la nouvelle version. Le suivi utilise GitHub CLI (`gh`), s'il est installé.
+Le suivi utilise GitHub CLI (`gh`) s'il est installé. Sans lui, suivez le déploiement dans l'onglet Actions du dépôt.
 
 ## Développement
 
@@ -51,5 +57,6 @@ npm run build       # génère dist/
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/` | Tests unitaires TypeScript (`node --test`) |
 | `scripts/check-dist.ts` | Vérifie que le build contient tout ce que le service worker met en cache |
+| `scripts/stamp-build.ts` | Inscrit le numéro de version et nomme le cache hors-ligne d’après le contenu du build |
 | `scripts/serve.ts` | Serveur local de `dist/` (`npm run serve`) |
-| `scripts/deploy.ts` | Déploiement complet (`npm run deploy`) |
+| `scripts/deploy.ts` | Push sur `main` avec vérifications et suivi du déploiement (`npm run deploy`) |
