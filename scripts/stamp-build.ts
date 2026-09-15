@@ -1,5 +1,5 @@
 // Finalise le build, dans cet ordre :
-// 1. inscrit dans app.js le numéro de version (nombre de commits) et le commit court,
+// 1. inscrit dans rehearsal/diagnostic.js le numéro de version (nombre de commits) et le commit court,
 //    affichés dans les réglages ;
 // 2. nomme le cache hors-ligne d'après le contenu du build. Toute modification publiée
 //    change ce nom, donc les appareils où l'app est installée se mettent à jour ;
@@ -42,8 +42,8 @@ const modified = Boolean(git(['status', '--porcelain']));
 const version = count ?? 'inconnue';
 const commitLabel = commit ? `${commit}${modified ? ' + modifications locales' : ''}` : 'inconnu';
 
-replaceIn('app.js', '__APP_VERSION__', version);
-replaceIn('app.js', '__APP_COMMIT__', commitLabel);
+replaceIn('rehearsal/diagnostic.js', '__APP_VERSION__', version);
+replaceIn('rehearsal/diagnostic.js', '__APP_COMMIT__', commitLabel);
 
 /* ---------- 2. Nom du cache hors-ligne ---------- */
 

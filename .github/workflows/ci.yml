@@ -11,8 +11,9 @@ permissions:
 
 jobs:
   build:
-    name: Types, tests et build
+    name: Types, tests, build et tests dans Chrome
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -29,11 +30,18 @@ jobs:
       - name: Vérification des types
         run: npm run typecheck
 
-      - name: Tests
+      - name: Tests unitaires
         run: npm test
 
       - name: Build
         run: npm run build
+
+      # L'app compilée dans Chrome sans interface, sur un écran de téléphone simulé :
+      # zones, gestes, réglages, mode test et fonctionnement hors-ligne.
+      # Google Chrome est préinstallé sur les machines ubuntu de GitHub (variable CHROME_BIN).
+      # En cas d'échec, rien n'est publié.
+      - name: Tests dans Chrome
+        run: npm run test:e2e
 
       - name: Artefact GitHub Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

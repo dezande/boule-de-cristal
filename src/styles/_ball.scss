@@ -2,6 +2,8 @@
 @use "mixins" as *;
 
 // Autel : halo, sol, boule et socle, centrés dans la safe area.
+// Classes d'état posées par src/stage/ball.ts : .stirring (nombre armé, la brume s'agite),
+// .revealed (nombre affiché) et .instant (retour au repos sans transition).
 .altar {
 	--mist-t: 2s;
 	position: absolute;

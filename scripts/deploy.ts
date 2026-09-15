@@ -3,7 +3,7 @@
 // l'exécution jusqu'à la mise en ligne.
 //
 // Usage : npm run deploy
-//         npm run deploy -- --dry-run   (vérifications et build, sans push)
+//         npm run deploy -- --dry-run   (vérifications, build et tests, sans push)
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
@@ -67,15 +67,17 @@ if (ahead === 0 && !dryRun) {
 }
 console.log(`${ahead} commit(s) à publier.`);
 
-/* ---------- 2. Types, tests, build ---------- */
+/* ---------- 2. Types, tests unitaires, build, tests dans Chrome ---------- */
 
 try {
 	step('Vérification des types');
 	run('npm', ['run', '--silent', 'typecheck']);
-	step('Tests');
+	step('Tests unitaires');
 	run('npm', ['test', '--silent']);
 	step('Build');
 	run('npm', ['run', '--silent', 'build']);
+	step('Tests dans Chrome');
+	run('npm', ['run', '--silent', 'test:e2e']);
 } catch {
 	fail('Vérifications en échec : rien n\'a été poussé.');
 }

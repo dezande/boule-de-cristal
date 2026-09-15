@@ -1,7 +1,7 @@
 // Vérifie que le build est complet : fichiers de base, icônes du manifest
 // et fichiers mis en cache par le service worker.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 
 const DIST = 'dist';
 const errors: string[] = [];
@@ -22,7 +22,11 @@ if (existsSync(join(DIST, 'sw.js'))) {
 	if (assets.length === 0) errors.push('aucun fichier mis en cache trouvé dans sw.js');
 	for (const file of new Set(assets)) expectFile(file, 'mis en cache par le service worker');
 	// Un script oublié dans la liste casserait l'app hors-ligne.
-	for (const file of readdirSync(DIST).filter((name) => name.endsWith('.js') && name !== 'sw.js')) {
+	// Chemins relatifs à dist/, sous-dossiers compris, avec des « / » comme dans sw.js.
+	const scripts = readdirSync(DIST, { recursive: true, encoding: 'utf8' })
+		.map((name) => name.split(sep).join('/'))
+		.filter((name) => name.endsWith('.js') && name !== 'sw.js');
+	for (const file of scripts) {
 		if (!assets.includes(file)) errors.push(`${file} n'est pas mis en cache par le service worker (src/sw/sw.ts)`);
 	}
 }
