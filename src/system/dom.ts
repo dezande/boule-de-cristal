@@ -1,11 +1,8 @@
-/* Accès au DOM partagé par tous les modules de l'app. */
+/* Accès au DOM partagé par tous les modules de l'app ($ vient du kit). */
 
-/** querySelector qui échoue bruyamment : une erreur de sélecteur se voit dès le chargement. */
-export function $<T extends Element = HTMLElement>(selector: string, parent: ParentNode = document): T {
-	const element = parent.querySelector<T>(selector);
-	if (!element) throw new Error(`Élément introuvable : ${selector}`);
-	return element;
-}
+import { $ } from '../kit/web/dom.ts';
+
+export { $ };
 
 /** La scène : surface plein écran qui reçoit les touchers. */
 export const stage = $('#stage');

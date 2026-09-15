@@ -3,17 +3,25 @@
  * Il s'ouvre par un appui de 3 s sur la scène (stage/touch.ts).
  */
 
+import { describeWake, keepScreenAwake, onWakeChange } from '../kit/web/wake-lock.ts';
 import { MAX_VALUE_LENGTH } from '../logic/settings.ts';
 import { BUILD, debugLog } from '../rehearsal/diagnostic.ts';
 import { hideHoldTimer } from '../rehearsal/hold-timer.ts';
 import { setTestMode } from '../rehearsal/test-mode.ts';
 import { hardReset } from '../stage/ball.ts';
 import { $ } from '../system/dom.ts';
-import { keepScreenAwake } from '../system/wake-lock.ts';
 import { settings, storeSettings, ZONE_NAMES, type ZoneCount } from './store.ts';
 
 const settingsEl = $('#settings');
 const sheet = $('.sheet', settingsEl);
+
+// État du maintien de l'écran allumé (kit/web/wake-lock.ts), affiché dans les réglages.
+onWakeChange((state) => {
+	const wake = describeWake(state);
+	$('#wake-dot').className = `dot ${state.lock ? 'lock' : state.video ? 'video' : 'off'}`;
+	$('#wake-text').textContent = wake.text;
+	$('#wake-detail').textContent = wake.detail;
+});
 
 /** Nombre à la française, une décimale au plus (« 1,5 »). */
 const fmt = (n: number): string => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 });

@@ -6,10 +6,12 @@
 // et l'installation sur l'écran d'accueil.
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { startStaticServer, type StaticServer } from '../../scripts/static-server.ts';
-import { Browser, SCREEN, type Page, type Point } from './chrome.ts';
+import { Browser, SCREEN, type Page, type Point } from '../../src/kit/node/chrome.ts';
+import { startStaticServer, type StaticServer } from '../../src/kit/node/static-server.ts';
 
 /** Clé d'enregistrement des réglages (src/settings/store.ts). */
 const STORAGE_KEY = 'voyante:settings:v1';
@@ -49,10 +51,10 @@ after(async () => {
  * (objet, texte brut pour simuler des données abîmées, ou undefined pour aucun réglage),
  * lance `run`, puis vérifie qu'aucune erreur JavaScript n'a eu lieu.
  */
-async function withApp(stored: object | string | undefined, run: (page: Page) => Promise<void>): Promise<void> {
+async function withApp(stored: object | string | undefined, run: (page: Page) => Promise<void>, url = server.url): Promise<void> {
 	const page = await browser.newPage();
 	try {
-		await page.goto(server.url);
+		await page.goto(url);
 		const raw = typeof stored === 'string' ? stored : JSON.stringify(stored);
 		await page.evaluate(`localStorage.clear(); ${stored === undefined ? '' : `localStorage.setItem('${STORAGE_KEY}', ${JSON.stringify(raw)})`}`);
 		await page.reload();
@@ -75,9 +77,9 @@ async function expectCleared(page: Page): Promise<void> {
 	await page.waitFor(`!${NUMBER}.shown`, 'nombre effacé', 3000, NUMBER);
 }
 
-/** Double tap pour effacer, puis attente de la fin du fondu : l'app est de nouveau prête. */
-async function resetBall(page: Page): Promise<void> {
-	await page.doubleTap(CENTER);
+/** Double tap pour effacer (au point `at`), puis attente de la fin du fondu : l'app est de nouveau prête. */
+async function resetBall(page: Page, at: Point = CENTER): Promise<void> {
+	await page.doubleTap(at);
 	await expectCleared(page);
 	await sleep(FADE_OUT_MS);
 }
@@ -362,6 +364,134 @@ test('mode test : 3 bandes sur toute la largeur', TEST_TIMEOUT, async () => {
 });
 
 /* ================= Hors-ligne ================= */
+
+/* ================= Toujours en portrait ================= */
+
+/** Téléphone tourné : vers la gauche (angle 90), vers la droite (angle 270), ou droit (0). */
+async function turnPhone(page: Page, angle: 0 | 90 | 270): Promise<void> {
+	const landscape = angle !== 0;
+	await page.send('Emulation.setDeviceMetricsOverride', {
+		width: landscape ? SCREEN.height : SCREEN.width,
+		height: landscape ? SCREEN.width : SCREEN.height,
+		deviceScaleFactor: 3,
+		mobile: true,
+		screenOrientation: { type: angle === 0 ? 'portraitPrimary' : angle === 90 ? 'landscapePrimary' : 'landscapeSecondary', angle },
+	});
+	await page.waitFor(`document.querySelector('#app').dataset.rotation === '${angle === 0 ? 0 : angle === 90 ? -90 : 90}'`, `rotation pour l'angle ${angle}`, 3000);
+}
+
+test('téléphone en paysage : l’app pivote, la boule garde sa taille et les zones suivent le téléphone', TEST_TIMEOUT, async () => {
+	const W = SCREEN.height; // largeur de l'écran en paysage
+	const H = SCREEN.width;
+	const LANDSCAPE_CENTER: Point = { x: W / 2, y: H / 2 };
+	await withApp({ ...FAST, zones: 3 }, async (page) => {
+		const ballSize = `Math.round(document.querySelector('.ball').offsetWidth)`;
+		const portraitBall = await page.evaluate<number>(ballSize);
+
+		// Vers la gauche : le haut du téléphone (bande du haut, 6) est à gauche de l'écran.
+		await turnPhone(page, 90);
+		assert.deepEqual(await page.evaluate(`[document.querySelector('#stage').clientWidth, document.querySelector('#stage').clientHeight]`), [SCREEN.width, SCREEN.height]);
+		assert.equal(await page.evaluate<number>(ballSize), portraitBall, 'boule de la même taille qu’en portrait');
+		await page.tap({ x: 60, y: H / 2 });
+		await expectShown(page, '6');
+		await resetBall(page, LANDSCAPE_CENTER);
+		await page.tap({ x: W - 60, y: H / 2 });
+		await expectShown(page, '26');
+		await resetBall(page, LANDSCAPE_CENTER);
+
+		// Vers la droite : le haut du téléphone est à droite de l'écran.
+		await turnPhone(page, 270);
+		await page.tap({ x: W - 60, y: H / 2 });
+		await expectShown(page, '6');
+		await resetBall(page, LANDSCAPE_CENTER);
+
+		// Appui de 3 s : réglages, qui défilent dans le sens du téléphone (haut du téléphone à droite : doigt vers la droite).
+		await page.touchStart({ x: W / 2, y: H / 2 });
+		await page.waitFor(isSettingsOpen, 'réglages ouverts en paysage', 5000);
+		await page.touchEnd();
+		await sleep(600); // panneau affiché
+		const scrollTop = `document.querySelector('#settings .sheet').scrollTop`;
+		// Doigt posé dans la marge gauche du panneau (pas sur un curseur, qui bougerait au lieu de défiler),
+		// glissé vers le haut du téléphone. Haut du téléphone à droite de l'écran : x = W - y dans l'app.
+		const marginX = 10;
+		assert.equal(await page.evaluate(`document.elementFromPoint(${W - 700}, ${marginX}).className`), 'sheet', 'départ du glissement dans la marge du panneau');
+		await page.touchStart({ x: W - 700, y: marginX });
+		for (let i = 1; i <= 12; i++) {
+			await sleep(20);
+			await page.touchMove({ x: W - 700 + (550 * i) / 12, y: marginX });
+		}
+		await page.touchEnd();
+		await sleep(400);
+		assert.ok(await page.evaluate<number>(scrollTop) > 0, 'les réglages ont défilé');
+
+		await click(page, '#close-btn');
+		await turnPhone(page, 0);
+		assert.equal(await page.evaluate<number>(ballSize), portraitBall);
+	});
+});
+
+/* ================= Écran allumé ================= */
+
+test('écran allumé : verrou demandé et vidéo muette en marche après un toucher', TEST_TIMEOUT, async () => {
+	await withApp(FAST, async (page) => {
+		await page.tap(TOP_LEFT);
+		await page.waitFor(`document.querySelector('#keep-awake') && !document.querySelector('#keep-awake').paused`, 'vidéo muette en lecture', 5000);
+		await page.waitFor(`document.querySelector('#wake-dot').className !== 'dot off'`, 'verrou actif', 5000);
+		assert.match(await text(page, '#wake-text'), /verrou actif/);
+		if (await page.evaluate<boolean>(`document.querySelector('#wake-dot').className === 'dot lock'`)) {
+			assert.equal(await text(page, '#wake-detail'), 'Screen Wake Lock API + vidéo muette en boucle');
+		}
+	});
+});
+
+/* ================= Mises à jour ================= */
+
+/** Attend que la page ait été rechargée (marqueur __avant disparu) et l'app redémarrée. */
+async function waitForReload(page: Page, timeoutMs = 15_000): Promise<void> {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		try {
+			if (await page.evaluate<boolean>(`!window.__avant && Boolean(document.querySelector('#version-badge').textContent)`)) return;
+		} catch {
+			// Page en cours de remplacement.
+		}
+		await sleep(100);
+	}
+	throw new Error('Attente dépassée : rechargement automatique après la mise à jour');
+}
+
+test('nouvelle version publiée : nouveau cache, caches des autres apps intacts, réglages conservés, rechargement', TEST_TIMEOUT, async () => {
+	// Copie de dist/ servie à part, où l'on « publie » une nouvelle version.
+	const dir = mkdtempSync(join(tmpdir(), 'boule-update-'));
+	cpSync('dist', dir, { recursive: true });
+	const site = await startStaticServer(dir, 0);
+	const stored = { ...FAST, zones: 4, values: ['1', '2', '3', '4'] };
+	try {
+		await withApp(stored, async (page) => {
+			await page.waitFor(`navigator.serviceWorker.controller`, 'service worker actif', 15_000);
+			// Même origine que les autres apps de dezande.github.io : leurs caches doivent survivre.
+			await page.evaluate(`caches.open('analyseur-q-autre-app')`);
+
+			const sw = join(dir, 'sw.js');
+			const oldCache = readFileSync(sw, 'utf8').match(/const CACHE = '([^']+)'/)?.[1] ?? '';
+			const newCache = 'voyante-nouvelleversion';
+			writeFileSync(sw, readFileSync(sw, 'utf8').replace(oldCache, newCache));
+			const build = join(dir, 'kit', 'web', 'build.js');
+			writeFileSync(build, readFileSync(build, 'utf8').replace(/version: '[^']*'/, "version: '9999'"));
+
+			await page.evaluate(`window.__avant = true; navigator.serviceWorker.getRegistration().then((r) => r.update())`);
+			await waitForReload(page);
+			await page.waitFor(`document.querySelector('#version-badge').textContent.startsWith('v9999 ')`, 'nouvelle version affichée', 5000, `document.querySelector('#version-badge').textContent`);
+			assert.deepEqual((await page.evaluate<string[]>(`caches.keys()`)).sort(), ['analyseur-q-autre-app', newCache].sort());
+			assert.deepEqual(await storedSettings(page), { ...(await storedSettings(page)), ...stored }, 'réglages conservés');
+			await page.tap(BOTTOM_RIGHT);
+			await expectShown(page, '4');
+		}, site.url);
+	} finally {
+		await site.close();
+		rmSync(dir, { recursive: true, force: true });
+	}
+});
 
 test('hors-ligne : tous les fichiers sont en cache et l’app fonctionne serveur arrêté', TEST_TIMEOUT, async () => {
 	// Serveur dédié, arrêté en cours de test : c'est le seul moyen fiable de couper le réseau,

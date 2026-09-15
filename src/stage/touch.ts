@@ -5,6 +5,8 @@
  * et applique les effets : boule, chrono, réglages, journal de diagnostic.
  */
 
+import { appPoint } from '../kit/web/orientation.ts';
+import { keepScreenAwake } from '../kit/web/wake-lock.ts';
 import { GestureTracker, HOLD, isMouseAfterTouch, type PointerId } from '../logic/gestures.ts';
 import { zoneIndexForPoint } from '../logic/zone-logic.ts';
 import { debugLog } from '../rehearsal/diagnostic.ts';
@@ -13,7 +15,6 @@ import { flashZone } from '../rehearsal/test-mode.ts';
 import { openSettings } from '../settings/panel.ts';
 import { settings } from '../settings/store.ts';
 import { stage } from '../system/dom.ts';
-import { keepScreenAwake } from '../system/wake-lock.ts';
 import { arm, fadeOut, isArmed, isLocked } from './ball.ts';
 
 const gestures = new GestureTracker();
@@ -61,9 +62,10 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 		debugLog('double tap : la boule s\'efface');
 		fadeOut();
 	} else if (action === 'arm') {
-		// Coordonnées relatives à la scène, comme attendu par logic/zone-logic.ts.
-		const rect = stage.getBoundingClientRect();
-		const index = zoneIndexForPoint(clientX - rect.left, clientY - rect.top, rect.width, rect.height, settings.zones);
+		// Coordonnées dans le repère de la scène, qui peut être pivotée (kit/web/orientation.ts),
+		// comme attendu par logic/zone-logic.ts : « haut » reste le haut du téléphone.
+		const point = appPoint(clientX, clientY);
+		const index = zoneIndexForPoint(point.x, point.y, stage.clientWidth, stage.clientHeight, settings.zones);
 		if (index >= 0) {
 			arm(index);
 			flashZone(index);

@@ -19,169 +19,168 @@
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
-	<main id="stage">
-		<div class="velvet"></div>
+	<!-- Toute l'app : pivote en paysage pour rester en portrait (src/kit/web/orientation.ts). -->
+	<div id="app">
+		<main id="stage">
+			<div class="velvet"></div>
 
-		<div class="altar" id="altar">
-			<div class="halo"></div>
-			<div class="halo-warm"></div>
-			<div class="floor"></div>
+			<div class="altar" id="altar">
+				<div class="halo"></div>
+				<div class="halo-warm"></div>
+				<div class="floor"></div>
 
-			<div class="ball">
-				<div class="globe">
-					<div class="mist-wrap back">
-						<div class="mist m1"></div>
-						<div class="mist m2"></div>
+				<div class="ball">
+					<div class="globe">
+						<div class="mist-wrap back">
+							<div class="mist m1"></div>
+							<div class="mist m2"></div>
+						</div>
+						<div class="inner-glow"></div>
+						<div class="warm-glow"></div>
+						<div class="number" id="number"><span id="number-text"></span></div>
+						<div class="mist-wrap front">
+							<div class="mist m3"></div>
+						</div>
+						<div class="refract"></div>
+						<div class="shade"></div>
+						<div class="arc"></div>
+						<div class="arc-low"></div>
+						<div class="specular"></div>
+						<div class="glint"></div>
+						<div class="rimline"></div>
 					</div>
-					<div class="inner-glow"></div>
-					<div class="warm-glow"></div>
-					<div class="number" id="number"><span id="number-text"></span></div>
-					<div class="mist-wrap front">
-						<div class="mist m3"></div>
-					</div>
-					<div class="refract"></div>
-					<div class="shade"></div>
-					<div class="arc"></div>
-					<div class="arc-low"></div>
-					<div class="specular"></div>
-					<div class="glint"></div>
-					<div class="rimline"></div>
 				</div>
+
+				<svg class="base" id="base" viewBox="0 0 240 120" aria-hidden="true">
+					<defs>
+						<linearGradient id="g-metal" x1="0" x2="1">
+							<stop offset="0" stop-color="#040208"/>
+							<stop offset=".28" stop-color="#1d1030"/>
+							<stop offset=".42" stop-color="#3a2552"/>
+							<stop offset=".56" stop-color="#1a0e2b"/>
+							<stop offset="1" stop-color="#030106"/>
+						</linearGradient>
+						<linearGradient id="g-top" x1="0" x2="1">
+							<stop offset="0" stop-color="#07030d"/>
+							<stop offset=".35" stop-color="#2b1a42"/>
+							<stop offset=".5" stop-color="#46306a"/>
+							<stop offset=".7" stop-color="#21133a"/>
+							<stop offset="1" stop-color="#050209"/>
+						</linearGradient>
+						<radialGradient id="g-lip-glow" cx=".5" cy="0" r=".7">
+							<stop offset="0" stop-color="#9a7ce6" stop-opacity=".5"/>
+							<stop offset="1" stop-color="#9a7ce6" stop-opacity="0"/>
+						</radialGradient>
+						<linearGradient id="g-gold" x1="0" x2="1">
+							<stop offset="0" stop-color="#c9a45c" stop-opacity="0"/>
+							<stop offset=".35" stop-color="#ecd092" stop-opacity=".75"/>
+							<stop offset=".65" stop-color="#c9a45c" stop-opacity=".5"/>
+							<stop offset="1" stop-color="#c9a45c" stop-opacity="0"/>
+						</linearGradient>
+					</defs>
+					<path d="M16 96 L10 106 C50 122 190 122 230 106 L224 96 Z" fill="url(#g-metal)"/>
+					<ellipse cx="120" cy="96" rx="104" ry="12" fill="url(#g-top)"/>
+					<path d="M16 96 C56 110 184 110 224 96" fill="none" stroke="url(#g-gold)" stroke-width=".8"/>
+					<path d="M76 40 C96 50 144 50 164 40 C150 58 136 70 138 94 C128 100 112 100 102 94 C104 70 90 58 76 40 Z" fill="url(#g-metal)"/>
+					<path d="M14 10 C58 40 182 40 226 10 L216 30 C178 58 62 58 24 30 Z" fill="url(#g-metal)"/>
+					<path d="M14 10 C58 40 182 40 226 10 L216 30 C178 58 62 58 24 30 Z" fill="url(#g-lip-glow)"/>
+					<path d="M14 10 C58 40 182 40 226 10" fill="none" stroke="url(#g-gold)" stroke-width="1"/>
+					<path d="M24 30 C62 58 178 58 216 30" fill="none" stroke="url(#g-gold)" stroke-width=".6" opacity=".6"/>
+				</svg>
 			</div>
 
-			<svg class="base" id="base" viewBox="0 0 240 120" aria-hidden="true">
-				<defs>
-					<linearGradient id="g-metal" x1="0" x2="1">
-						<stop offset="0" stop-color="#040208"/>
-						<stop offset=".28" stop-color="#1d1030"/>
-						<stop offset=".42" stop-color="#3a2552"/>
-						<stop offset=".56" stop-color="#1a0e2b"/>
-						<stop offset="1" stop-color="#030106"/>
-					</linearGradient>
-					<linearGradient id="g-top" x1="0" x2="1">
-						<stop offset="0" stop-color="#07030d"/>
-						<stop offset=".35" stop-color="#2b1a42"/>
-						<stop offset=".5" stop-color="#46306a"/>
-						<stop offset=".7" stop-color="#21133a"/>
-						<stop offset="1" stop-color="#050209"/>
-					</linearGradient>
-					<radialGradient id="g-lip-glow" cx=".5" cy="0" r=".7">
-						<stop offset="0" stop-color="#9a7ce6" stop-opacity=".5"/>
-						<stop offset="1" stop-color="#9a7ce6" stop-opacity="0"/>
-					</radialGradient>
-					<linearGradient id="g-gold" x1="0" x2="1">
-						<stop offset="0" stop-color="#c9a45c" stop-opacity="0"/>
-						<stop offset=".35" stop-color="#ecd092" stop-opacity=".75"/>
-						<stop offset=".65" stop-color="#c9a45c" stop-opacity=".5"/>
-						<stop offset="1" stop-color="#c9a45c" stop-opacity="0"/>
-					</linearGradient>
-				</defs>
-				<path d="M16 96 L10 106 C50 122 190 122 230 106 L224 96 Z" fill="url(#g-metal)"/>
-				<ellipse cx="120" cy="96" rx="104" ry="12" fill="url(#g-top)"/>
-				<path d="M16 96 C56 110 184 110 224 96" fill="none" stroke="url(#g-gold)" stroke-width=".8"/>
-				<path d="M76 40 C96 50 144 50 164 40 C150 58 136 70 138 94 C128 100 112 100 102 94 C104 70 90 58 76 40 Z" fill="url(#g-metal)"/>
-				<path d="M14 10 C58 40 182 40 226 10 L216 30 C178 58 62 58 24 30 Z" fill="url(#g-metal)"/>
-				<path d="M14 10 C58 40 182 40 226 10 L216 30 C178 58 62 58 24 30 Z" fill="url(#g-lip-glow)"/>
-				<path d="M14 10 C58 40 182 40 226 10" fill="none" stroke="url(#g-gold)" stroke-width="1"/>
-				<path d="M24 30 C62 58 178 58 216 30" fill="none" stroke="url(#g-gold)" stroke-width=".6" opacity=".6"/>
-			</svg>
+			<div id="dust"></div>
+			<div class="vignette"></div>
+		</main>
+
+		<div id="version-badge" aria-hidden="true"></div>
+		<div id="hold-timer" aria-hidden="true" hidden></div>
+		<div id="menu-zone" aria-hidden="true"><span>Zone du menu : appui 3 s n'importe où</span></div>
+		<div id="dim"></div>
+		<div id="zones" hidden></div>
+
+		<div id="testbar" hidden>
+			<span class="state" id="test-state">Prêt</span>
+			<button type="button" id="test-back">Réglages</button>
+			<button type="button" id="test-quit">Quitter</button>
 		</div>
 
-		<div id="dust"></div>
-		<div class="vignette"></div>
-	</main>
+		<section id="settings" hidden aria-label="Réglages">
+			<div class="sheet">
+				<h1>Réglages</h1>
+				<p class="sub">Visible de vous seul. Enregistré sur cet appareil.</p>
 
-	<div id="version-badge" aria-hidden="true"></div>
-	<div id="hold-timer" aria-hidden="true" hidden></div>
-	<div id="menu-zone" aria-hidden="true"><span>Zone du menu : appui 3 s n'importe où</span></div>
-	<div id="dim"></div>
-	<div id="zones" hidden></div>
+				<div class="card">
+					<div class="row-label">Nombre de zones <small id="zones-hint">bandes horizontales</small></div>
+					<div class="seg" role="radiogroup">
+						<button type="button" role="radio" data-zones="2">2</button>
+						<button type="button" role="radio" data-zones="3">3</button>
+						<button type="button" role="radio" data-zones="4">4</button>
+					</div>
+				</div>
 
-	<div id="testbar" hidden>
-		<span class="state" id="test-state">Prêt</span>
-		<button type="button" id="test-back">Réglages</button>
-		<button type="button" id="test-quit">Quitter</button>
+				<div class="card">
+					<div class="row-label">Valeurs <small id="values-hint">de haut en bas</small></div>
+					<div class="values">
+						<div class="value-row"><label for="v0"></label><input id="v0" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+						<div class="value-row"><label for="v1"></label><input id="v1" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+						<div class="value-row"><label for="v2"></label><input id="v2" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+						<div class="value-row"><label for="v3"></label><input id="v3" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
+					</div>
+				</div>
+
+				<div class="card">
+					<label class="row-label" for="delay">Délai d'apparition <output id="delay-out"></output></label>
+					<input id="delay" type="range" min="0" max="10" step="0.5">
+				</div>
+
+				<div class="card">
+					<label class="row-label" for="fade">Durée du fondu <output id="fade-out"></output></label>
+					<input id="fade" type="range" min="0.5" max="6" step="0.1">
+				</div>
+
+				<div class="card">
+					<label class="row-label" for="brightness">Luminosité <output id="brightness-out"></output></label>
+					<input id="brightness" type="range" min="30" max="100" step="5">
+				</div>
+
+				<div class="card status">
+					<span class="dot" id="wake-dot"></span>
+					<div><span id="wake-text">Écran : verrou inactif</span><small id="wake-detail"></small></div>
+				</div>
+
+				<div class="card options">
+					<label class="toggle-row" for="show-version">Afficher la version sur la scène <input id="show-version" type="checkbox"></label>
+					<label class="toggle-row" for="show-menu-zone">Afficher la zone du menu en rouge <input id="show-menu-zone" type="checkbox"></label>
+					<label class="toggle-row" for="show-hold-timer">Afficher le chrono d'appui <input id="show-hold-timer" type="checkbox"></label>
+				</div>
+
+				<div class="card about">
+					<div class="about-row">Version <span id="about-version"></span></div>
+					<div class="about-row">Commit <span id="about-commit"></span></div>
+					<div class="about-row">Cache hors-ligne <span id="about-cache"></span></div>
+					<div class="about-row">Affichage <span id="about-display"></span></div>
+				</div>
+
+				<div class="actions">
+					<button type="button" id="test-btn">Test des zones</button>
+					<button type="button" id="close-btn" class="primary">Fermer</button>
+				</div>
+
+				<details class="card help">
+					<summary>Gestes</summary>
+					<ul>
+						<li>Toucher une zone (une bande, ou un coin avec 4 zones) : arme sa valeur. L'écran se verrouille aussitôt.</li>
+						<li>Double tap n'importe où, quand un nombre est armé ou affiché : le nombre s'estompe, l'app se réarme.</li>
+						<li>Appui de 3 s n'importe où sur l'écran : ouvre ces réglages (efface le nombre).</li>
+					</ul>
+				</details>
+
+				<button type="button" id="defaults-btn" class="link">Rétablir les réglages par défaut</button>
+			</div>
+		</section>
 	</div>
 
-	<section id="settings" hidden aria-label="Réglages">
-		<div class="sheet">
-			<h1>Réglages</h1>
-			<p class="sub">Visible de vous seul. Enregistré sur cet appareil.</p>
-
-			<div class="card">
-				<div class="row-label">Nombre de zones <small id="zones-hint">bandes horizontales</small></div>
-				<div class="seg" role="radiogroup">
-					<button type="button" role="radio" data-zones="2">2</button>
-					<button type="button" role="radio" data-zones="3">3</button>
-					<button type="button" role="radio" data-zones="4">4</button>
-				</div>
-			</div>
-
-			<div class="card">
-				<div class="row-label">Valeurs <small id="values-hint">de haut en bas</small></div>
-				<div class="values">
-					<div class="value-row"><label for="v0"></label><input id="v0" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
-					<div class="value-row"><label for="v1"></label><input id="v1" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
-					<div class="value-row"><label for="v2"></label><input id="v2" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
-					<div class="value-row"><label for="v3"></label><input id="v3" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
-				</div>
-			</div>
-
-			<div class="card">
-				<label class="row-label" for="delay">Délai d'apparition <output id="delay-out"></output></label>
-				<input id="delay" type="range" min="0" max="10" step="0.5">
-			</div>
-
-			<div class="card">
-				<label class="row-label" for="fade">Durée du fondu <output id="fade-out"></output></label>
-				<input id="fade" type="range" min="0.5" max="6" step="0.1">
-			</div>
-
-			<div class="card">
-				<label class="row-label" for="brightness">Luminosité <output id="brightness-out"></output></label>
-				<input id="brightness" type="range" min="30" max="100" step="5">
-			</div>
-
-			<div class="card status">
-				<span class="dot" id="wake-dot"></span>
-				<div><span id="wake-text">Écran : verrou inactif</span><small id="wake-detail"></small></div>
-			</div>
-
-			<div class="card options">
-				<label class="toggle-row" for="show-version">Afficher la version sur la scène <input id="show-version" type="checkbox"></label>
-				<label class="toggle-row" for="show-menu-zone">Afficher la zone du menu en rouge <input id="show-menu-zone" type="checkbox"></label>
-				<label class="toggle-row" for="show-hold-timer">Afficher le chrono d'appui <input id="show-hold-timer" type="checkbox"></label>
-			</div>
-
-			<div class="card about">
-				<div class="about-row">Version <span id="about-version"></span></div>
-				<div class="about-row">Commit <span id="about-commit"></span></div>
-				<div class="about-row">Cache hors-ligne <span id="about-cache"></span></div>
-				<div class="about-row">Affichage <span id="about-display"></span></div>
-			</div>
-
-			<div class="actions">
-				<button type="button" id="test-btn">Test des zones</button>
-				<button type="button" id="close-btn" class="primary">Fermer</button>
-			</div>
-
-			<details class="card help">
-				<summary>Gestes</summary>
-				<ul>
-					<li>Toucher une zone (une bande, ou un coin avec 4 zones) : arme sa valeur. L'écran se verrouille aussitôt.</li>
-					<li>Double tap n'importe où, quand un nombre est armé ou affiché : le nombre s'estompe, l'app se réarme.</li>
-					<li>Appui de 3 s n'importe où sur l'écran : ouvre ces réglages (efface le nombre).</li>
-				</ul>
-			</details>
-
-			<button type="button" id="defaults-btn" class="link">Rétablir les réglages par défaut</button>
-		</div>
-	</section>
-
-	<video id="keep-awake" muted playsinline webkit-playsinline loop preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1">
-		<source type="video/webm" src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwEAAAAAAAKCEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHWTbuMU6uEElTDZ1OsggEnTbuMU6uEHFO7a1OsggJs7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxMYXZmNjEuNy4xMDBXQYxMYXZmNjEuNy4xMDBEiYhAn0AAAAAAABZUrmvMrgEAAAAAAABD14EBc8WIbmYwf2A4k16cgQAitZyDdW5kiIEAhoVWX1ZQOIOBASPjg4Q7msoA4JSwgQG6gQGagQJTwIEBVbCEVbmBARJUw2dAj3Nzn2PAgGfImUWjh0VOQ09ERVJEh4xMYXZmNjEuNy4xMDBzc+pjwItjxYhuZjB/YDiTXmfIkUWjikFMUEhBX01PREVEh4ExZ8ihRaOHRU5DT0RFUkSHlExhdmM2MS4xOS4xMDAgbGlidnB4Z8ihRaOIRFVSQVRJT05Eh5MwMDowMDowMi4wMDAwMDAwMDAAH0O2dUCq54EAoNuhooEAAAAQAgCdASoBAAEAC8cIhYWImYSIP4IADA1gAP7mtQB1obSmsu6BAaWtcAIAnQEqAQABAAvHCIWFiJmEiD+CAnWqAgy9zgD+6NcfjebzWtb/G83mtWIAoMihmIED6ACxAQAvEfwAGAAwP/QMAAAA/ua1AHWhp6al7oEBpaCxAQAvEfwAGAAwP/QMAMIA/ujXH43m81rW/xvN5rViAPuC/BgcU7trkbuPs4EAt4r3gQHxggG88IED">
-		<source type="video/mp4" src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMrbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlZ0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHObWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABeW1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAATlzdGJsAAAAuXN0c2QAAAAAAAAAAQAAAKlhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MS4xOS4xMDAgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAAL2F2Y0MBQsAe/+EAFmdCwB7ZHsBEAAADAAQAAAMACDxYuSABAAZoy4BlEyAAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAAKRAAAAGwAAAAYc3R0cwAAAAAAAAABAAAAAgAAQAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAgAAAAEAAAAcc3RzegAAAAAAAAAAAAAAAgAAABAAAAALAAAAFHN0Y28AAAAAAAAAAQAAA1sAAABhdWR0YQAAAFltZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAACxpbHN0AAAAJKl0b28AAAAcZGF0YQAAAAEAAAAATGF2ZjYxLjcuMTAwAAAACGZyZWUAAAAjbWRhdAAAAAxliIQGc5yYoAAh54AAAAAHQZo4DGc6gA==">
-	</video>
 
 	<script type="module" src="app.js"></script>
 </body>

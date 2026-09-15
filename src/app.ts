@@ -22,25 +22,29 @@
  *     hold-timer.ts  chrono d'appui
  *     diagnostic.ts  version du build et journal ?debug
  *   system/      services du navigateur
- *     dom.ts         accès au DOM
- *     wake-lock.ts   écran toujours allumé
+ *     dom.ts         accès au DOM et scène
+ *   kit/         code commun des accessoires de scène (sous-module kit-scene, voir son README) :
+ *                écran allumé, portrait, hors-ligne et mises à jour, version
  *   logic/       logique pure, sans DOM, testée sous Node (tests/logic/)
  *     zone-logic.ts  zone touchée (bandes ou 4 coins)
  *     gestures.ts    décision de chaque geste : armer, effacer, ouvrir les réglages, annuler
  *     settings.ts    forme et validation des réglages
- *   sw/          service worker (cache hors-ligne)
+ *   sw/          compilation du service worker du kit (kit/sw/sw.ts)
  *   styles/      styles Sass
  *
  * Importer un module installe ses écouteurs : ce fichier ne fait que le démarrage.
  */
 
+// En premier : la rotation (verrou portrait) est calculée avant que les autres modules mesurent l'écran.
+import './kit/web/orientation.ts';
+import { setupUpdates } from './kit/web/updates.ts';
+import { keepScreenAwake } from './kit/web/wake-lock.ts';
 import { BUILD, debugLog } from './rehearsal/diagnostic.ts';
 import { applySettings, isSettingsOpen } from './settings/panel.ts';
 import { getPhase } from './stage/ball.ts';
 import { spawnDust } from './stage/dust.ts';
 import { forgetTouches, wasTouchedSinceShown } from './stage/touch.ts';
 import { $ } from './system/dom.ts';
-import { keepScreenAwake } from './system/wake-lock.ts';
 
 $('#version-badge').textContent = `v${BUILD.version} · ${BUILD.commit}`;
 applySettings();
@@ -52,25 +56,13 @@ void keepScreenAwake();
 /** Aucun tour en cours ni réglages ouverts. */
 const isIdle = (): boolean => getPhase() === 'idle' && !isSettingsOpen();
 
-document.addEventListener('visibilitychange', () => {
-	if (document.visibilityState !== 'visible') return;
+// Nouvelle version installée : rechargement seulement si personne n'a touché l'écran depuis
+// l'ouverture (ou le retour au premier plan) et hors tour ; sinon à l'ouverture suivante.
+setupUpdates({
+	canReload: () => !wasTouchedSinceShown() && isIdle(),
 	// Retour au premier plan hors tour : une mise à jour éventuelle pourra s'appliquer.
-	if (isIdle()) forgetTouches();
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.getRegistration().then((registration) => registration?.update()).catch(() => {});
-	}
+	onVisible: () => {
+		if (isIdle()) forgetTouches();
+	},
+	log: debugLog,
 });
-
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-	// Nouvelle version installée : on recharge pour l'afficher, mais seulement si personne n'a
-	// touché l'écran depuis l'ouverture (ou le retour au premier plan) : jamais pendant un tour.
-	// Au tout premier chargement (pas encore de service worker), rien à recharger.
-	const hadController = Boolean(navigator.serviceWorker.controller);
-	navigator.serviceWorker.addEventListener('controllerchange', () => {
-		debugLog('nouvelle version installée');
-		if (hadController && !wasTouchedSinceShown() && isIdle()) location.reload();
-	});
-	window.addEventListener('load', () => {
-		navigator.serviceWorker.register('sw.js').catch(() => {});
-	});
-}

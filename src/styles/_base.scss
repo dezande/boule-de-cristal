@@ -2,19 +2,13 @@
 @use "mixins" as *;
 
 :root {
-	--ball: min(74vw, 42vh, 520px);
 	--fade: 1.5s;
 	--dim: 0;
-	--safe-t: env(safe-area-inset-top, 0px);
-	--safe-r: env(safe-area-inset-right, 0px);
-	--safe-b: env(safe-area-inset-bottom, 0px);
-	--safe-l: env(safe-area-inset-left, 0px);
 }
 
-@supports (height: 1svh) {
-	:root {
-		--ball: min(74vw, 42svh, 520px);
-	}
+// Taille de la boule : relative à l'app (pivotée ou non, voir kit/styles/_app.scss).
+#app {
+	--ball: min(calc(var(--app-w) * .74), calc(var(--app-h) * .42), 520px);
 }
 
 // Hygiène tactile : ni surbrillance, ni callout, ni sélection.
@@ -115,15 +109,4 @@ input[type="text"] {
 		font: 600 13px/1 $sans;
 		white-space: nowrap;
 	}
-}
-
-// Vidéo de repli du maintien de l'écran allumé.
-#keep-awake {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 1px;
-	height: 1px;
-	opacity: .01;
-	pointer-events: none;
 }

@@ -1,7 +1,9 @@
 /* Version du build et journal de diagnostic (?debug). */
 
-/** Remplacés au build par scripts/stamp-build.ts ; affichés dans les réglages et le diagnostic. */
-export const BUILD = { version: '__APP_VERSION__', commit: '__APP_COMMIT__' };
+import { BUILD } from '../kit/web/build.ts';
+
+/** Version du build (remplie par le kit au build) ; affichée dans les réglages et le diagnostic. */
+export { BUILD };
 
 // Avec ?debug dans l'adresse, un journal affiche en direct ce que l'appareil reçoit.
 // Invisible et inactif sans ce paramètre.

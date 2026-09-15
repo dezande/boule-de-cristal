@@ -25,11 +25,17 @@ L'app doit être servie en HTTPS (GitHub Pages convient ; tous les chemins sont 
 
 Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
+### Toujours en portrait, écran toujours allumé
+
+- **Portrait** : l'app reste toujours en portrait. Sur Android, l'app installée verrouille l'orientation. Sur iPhone, une page web ne peut pas empêcher l'écran de basculer quand le téléphone est tourné sur le côté : l'app fait alors pivoter son affichage pour rester en portrait dans l'axe du téléphone. Les zones suivent le téléphone : la bande du haut reste celle du haut du téléphone.
+- **Écran allumé** : l'API Screen Wake Lock et une vidéo muette invisible en boucle, actives en même temps (sur iPhone avant iOS 18.4, dans l'app installée, l'API seule ne suffit pas).
+- **Réglages conservés** d'une version à l'autre : une mise à jour ne remplace que le cache hors-ligne. Elle ne supprime que les anciens caches de la boule, jamais ceux des autres apps de `dezande.github.io` (même origine, donc mêmes caches).
+
 ## Publication
 
 **Chaque push sur `main` met l'app à jour.** GitHub Actions vérifie les types, lance les tests unitaires, compile, puis teste l'app compilée dans Chrome. Si tout passe, il déploie sur GitHub Pages ; sinon, rien n'est publié.
 
-Le nom du cache hors-ligne est calculé au build à partir du contenu de l'app. Il n'y a donc rien à incrémenter à la main : dès qu'un fichier de l'app change, les téléphones où elle est installée récupèrent la nouvelle version à la prochaine ouverture avec du réseau.
+Le nom du cache hors-ligne est calculé au build à partir du contenu de l'app, numéro de version compris. Il n'y a donc rien à incrémenter à la main : dès qu'une nouvelle version est publiée, les téléphones où elle est installée la récupèrent à la prochaine ouverture avec du réseau. L'app se recharge seule si personne n'a touché l'écran depuis l'ouverture et qu'aucun tour n'est en cours ; sinon à l'ouverture suivante.
 
 Pour publier en suivant le déploiement depuis le terminal :
 
@@ -44,7 +50,10 @@ Le suivi utilise GitHub CLI (`gh`) s'il est installé. Sans lui, suivez le dépl
 
 Il faut Node 24 ou plus récent. TypeScript et Sass servent uniquement au build : l'app publiée n'a aucune dépendance.
 
+Le code commun aux accessoires de scène (écran allumé, portrait, hors-ligne et mises à jour, build, déploiement, pilotage de Chrome) vient du kit **[kit-scene](https://github.com/dezande/kit-scene)**, sous-module git monté dans `src/kit/`. L'app utilise une version précise du kit ; pour prendre la dernière, voir le README du kit.
+
 ```sh
+git submodule update --init   # après un clone : récupère le kit
 npm install
 npm run serve       # build puis serveur local sur http://localhost:8000
 npm test            # tests unitaires (quelques secondes)
@@ -56,11 +65,11 @@ npm run build       # génère dist/
 ### Tests
 
 - **Tests unitaires** (`tests/logic/`, `npm test`) : la logique pure de `src/logic/`, sous Node. Zone touchée (bandes ou coins), décision de chaque geste (armer, effacer, ouvrir les réglages, annuler), validation des réglages relus sur l'appareil.
-- **Tests dans Chrome** (`tests/e2e/`, `npm run test:e2e`) : l'app compilée dans Chrome sans interface, sur un écran de téléphone simulé, avec de vrais événements tactiles. Chaque zone, double tap, appui de 3 s (et ses annulations), délai, réglages enregistrés et relus, réglages abîmés, mode test, fonctionnement serveur arrêté. Aucune dépendance à installer : il faut Google Chrome, trouvé automatiquement (sinon, indiquez son chemin dans `CHROME_PATH`).
+- **Tests dans Chrome** (`tests/e2e/`, `npm run test:e2e`) : l'app compilée dans Chrome sans interface, sur un écran de téléphone simulé, avec de vrais événements tactiles. Chaque zone, double tap, appui de 3 s (et ses annulations), délai, réglages enregistrés et relus, réglages abîmés, mode test, téléphone tourné dans les deux sens (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté. Aucune dépendance à installer : il faut Google Chrome, trouvé automatiquement (sinon, indiquez son chemin dans `CHROME_PATH`).
 
 Restent à vérifier sur un vrai téléphone : l'écran toujours allumé, le ressenti des gestes et l'installation sur l'écran d'accueil.
 
-Ajouter un fichier dans `src/` impose de l'ajouter à la liste du cache hors-ligne (`src/sw/sw.ts`) : le build échoue en cas d'oubli.
+La liste des fichiers mis en cache hors-ligne est calculée au build : un nouveau fichier dans `src/` n'a rien à déclarer.
 
 | Dossier | Contenu |
 | --- | --- |
@@ -69,13 +78,10 @@ Ajouter un fichier dans `src/` impose de l'ajouter à la liste du cache hors-lig
 | `src/stage/` | La scène : gestes (`touch.ts`), phases de la boule (`ball.ts`), particules (`dust.ts`) |
 | `src/settings/` | Réglages : validation et enregistrement (`store.ts`), panneau de réglages (`panel.ts`) |
 | `src/rehearsal/` | Aides à la répétition : test des zones, chrono d'appui, version et journal `?debug` |
-| `src/system/` | Services du navigateur : accès au DOM, écran toujours allumé |
+| `src/system/` | Accès au DOM et scène |
+| `src/kit/` | Kit commun [kit-scene](https://github.com/dezande/kit-scene) (sous-module) : écran allumé, portrait, service worker et mises à jour, version, styles `#app`, outils de build, déploiement et pilote de Chrome |
 | `src/logic/` | Logique pure testée sous Node : zone touchée (bandes ou 4 coins), gestes, validation des réglages |
-| `src/sw/sw.ts` | Service worker (cache hors-ligne) |
+| `src/sw/` | Compilation du service worker du kit (`src/kit/sw/sw.ts`) |
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/logic/` | Tests unitaires de `src/logic/` (`npm test`) |
-| `tests/e2e/` | Tests dans Chrome (`npm run test:e2e`) et pilote de Chrome sans dépendance (`chrome.ts`) |
-| `scripts/check-dist.ts` | Vérifie que le build contient tout ce que le service worker met en cache |
-| `scripts/stamp-build.ts` | Inscrit le numéro de version et nomme le cache hors-ligne d’après le contenu du build |
-| `scripts/serve.ts`, `scripts/static-server.ts` | Serveur local de `dist/` (`npm run serve`), réutilisé par les tests dans Chrome |
-| `scripts/deploy.ts` | Push sur `main` avec vérifications et suivi du déploiement (`npm run deploy`) |
+| `tests/e2e/` | Tests dans Chrome (`npm run test:e2e`) |

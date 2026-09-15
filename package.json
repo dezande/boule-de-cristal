@@ -3,17 +3,22 @@
 	"private": true,
 	"type": "module",
 	"homepage": "https://dezande.github.io/boule-de-cristal/",
+	"kit": {
+		"name": "Boule de cristal",
+		"cachePrefix": "voyante",
+		"requiredFiles": ["stage/touch.js", "settings/panel.js"]
+	},
 	"engines": {
 		"node": ">=24"
 	},
 	"scripts": {
 		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-		"build": "npm run clean && node -e \"require('node:fs').cpSync('public', 'dist', { recursive: true })\" && sass --no-source-map src/styles/main.scss dist/style.css && tsc -p src && tsc -p src/sw && node scripts/check-dist.ts && node scripts/stamp-build.ts",
+		"build": "npm run clean && node -e \"require('node:fs').cpSync('public', 'dist', { recursive: true })\" && sass --no-source-map src/styles/main.scss dist/style.css && tsc -p src && tsc -p src/sw && node src/kit/node/check-dist.ts && node src/kit/node/stamp-build.ts",
 		"typecheck": "tsc -p src --noEmit && tsc -p src/sw --noEmit && tsc",
 		"test": "node --test \"tests/**/*.test.ts\"",
 		"test:e2e": "node --test --test-concurrency=1 \"tests/e2e/**/*.e2e.ts\"",
-		"serve": "npm run build && node scripts/serve.ts",
-		"deploy": "node scripts/deploy.ts"
+		"serve": "npm run build && node src/kit/node/serve.ts",
+		"deploy": "node src/kit/node/deploy.ts"
 	},
 	"devDependencies": {
 		"@types/node": "^24.13.4",

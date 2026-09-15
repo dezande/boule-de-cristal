@@ -44,14 +44,14 @@ function tag(label: string, value: string): HTMLSpanElement {
 /** Dessine les limites des zones, alignées sur la scène. */
 function renderZones(): void {
 	zonesEl.textContent = '';
-	const rect = stage.getBoundingClientRect();
-	for (const r of zoneRects(rect.width, rect.height, settings.zones)) {
+	// Repère de la scène (pivotée ou non) : #zones est dans #app, comme la scène.
+	for (const r of zoneRects(stage.clientWidth, stage.clientHeight, settings.zones)) {
 		const zone = document.createElement('div');
 		zone.className = 'zone';
 		// Colonne de droite des 4 coins : trait vertical et étiquette à droite.
 		zone.classList.toggle('right', r.left > 0);
-		zone.style.left = `${rect.left + r.left}px`;
-		zone.style.top = `${rect.top + r.top}px`;
+		zone.style.left = `${r.left}px`;
+		zone.style.top = `${r.top}px`;
 		zone.style.width = `${r.right - r.left}px`;
 		zone.style.height = `${r.bottom - r.top}px`;
 		zone.append(tag(`${ZONE_NAMES[settings.zones][r.index]} →`, settings.values[r.index]));

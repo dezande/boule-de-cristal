@@ -23,8 +23,8 @@
 		@include cover;
 		opacity: .6;
 		background:
-			repeating-linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .45) 7vw, rgba(110, 70, 190, .07) 12vw, transparent 17vw),
-			repeating-linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .22) 3vw, transparent 5.5vw);
+			repeating-linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .45) calc(var(--app-w) * .07), rgba(110, 70, 190, .07) calc(var(--app-w) * .12), transparent calc(var(--app-w) * .17)),
+			repeating-linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .22) calc(var(--app-w) * .03), transparent calc(var(--app-w) * .055));
 		@include mask-image(linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .6) 55%, transparent 82%));
 	}
 }
@@ -59,10 +59,10 @@
 
 @keyframes rise {
 	0% { transform: translate3d(0, 0, 0); }
-	25% { transform: translate3d(var(--dx), -28vh, 0); }
-	50% { transform: translate3d(0, -56vh, 0); }
-	75% { transform: translate3d(calc(var(--dx) * -1), -84vh, 0); }
-	100% { transform: translate3d(0, -112vh, 0); }
+	25% { transform: translate3d(var(--dx), calc(var(--app-h) * -.28), 0); }
+	50% { transform: translate3d(0, calc(var(--app-h) * -.56), 0); }
+	75% { transform: translate3d(calc(var(--dx) * -1), calc(var(--app-h) * -.84), 0); }
+	100% { transform: translate3d(0, calc(var(--app-h) * -1.12), 0); }
 }
 
 @keyframes twinkle {
