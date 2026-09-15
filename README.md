@@ -10,7 +10,7 @@ Accessoire de scène : une PWA mono-page, 100 % hors-ligne, qui fait apparaître
 | **Double tap n'importe où**, quand un nombre est armé ou affiché | Le nombre s'estompe, l'app se réarme |
 | **Appui de 3 s n'importe où** sur l'écran | Ouvre les réglages (et efface le nombre) |
 
-Les réglages permettent de changer le nombre de zones (2, 3 ou 4), les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Trois options y masquent les aides visuelles de la scène, toutes visibles par défaut : la zone du menu en rouge (tout l'écran), le chrono qui compte la durée d'un appui en haut de l'écran, et la petite version en bas à gauche. Masquez-les avant de jouer : le chrono apparaît aussi brièvement au toucher discret. Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
+Les réglages permettent de changer le nombre de zones, les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Avec 2 ou 3 zones, l'écran est coupé en bandes horizontales ; avec 4 zones, en 4 coins (haut gauche, haut droite, bas gauche, bas droite). Trois options y masquent les aides visuelles de la scène, toutes visibles par défaut : la zone du menu en rouge (tout l'écran), le chrono qui compte la durée d'un appui en haut de l'écran, et la petite version en bas à gauche. Masquez-les avant de jouer : le chrono apparaît aussi brièvement au toucher discret. Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
 
 ### Diagnostic
 
@@ -56,7 +56,7 @@ npm run build       # génère dist/
 | --- | --- |
 | `public/` | `index.html`, manifest et icônes, copiés tels quels |
 | `src/app.ts` | Scène, gestes, réglages, maintien de l'écran allumé |
-| `src/zone-logic.ts` | Logique pure « coordonnée Y → valeur », testée sous Node |
+| `src/zone-logic.ts` | Logique pure « point touché → zone » (bandes ou 4 coins), testée sous Node |
 | `src/gestures.ts` | Logique pure du double tap de réinitialisation, testée sous Node |
 | `src/sw/sw.ts` | Service worker (cache hors-ligne) |
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |

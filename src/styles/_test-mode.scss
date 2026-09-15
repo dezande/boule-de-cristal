@@ -11,13 +11,24 @@
 
 .zone {
 	position: absolute;
-	left: 0;
-	right: 0;
+	box-sizing: border-box;
 	border-top: 1px dashed rgba(243, 226, 176, .6);
 	background: rgba(243, 226, 176, .035);
 
-	&:first-child {
+	// Première ligne : pas de trait en haut (index 0 en bandes, 0 et 1 en coins).
+	&:first-child,
+	&.right:nth-child(2) {
 		border-top: none;
+	}
+
+	// Colonne de droite (4 coins) : trait vertical, étiquette calée à droite.
+	&.right {
+		border-left: 1px dashed rgba(243, 226, 176, .6);
+
+		.tag {
+			left: auto;
+			right: calc(12px + var(--safe-r));
+		}
 	}
 
 	&.hit {

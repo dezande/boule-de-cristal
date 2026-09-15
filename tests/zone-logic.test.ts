@@ -2,7 +2,7 @@
 // Lancer : npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { zoneIndexForY, valueForY, zoneBounds } from '../src/zone-logic.ts';
+import { zoneIndexForY, valueForY, zoneBounds, zoneIndexForPoint, zoneRects } from '../src/zone-logic.ts';
 
 const VALUES = ['6', '16', '26'] as const;
 
@@ -60,3 +60,41 @@ test('entrées invalides', () => {
 	assert.equal(zoneBounds(0, 3).length, 0);
 });
 
+
+test('4 zones : les 4 coins', () => {
+	const w = 390;
+	const h = 844;
+	assert.equal(zoneIndexForPoint(10, 10, w, h, 4), 0);
+	assert.equal(zoneIndexForPoint(380, 10, w, h, 4), 1);
+	assert.equal(zoneIndexForPoint(10, 834, w, h, 4), 2);
+	assert.equal(zoneIndexForPoint(380, 834, w, h, 4), 3);
+	assert.equal(zoneIndexForPoint(194.9, 421.9, w, h, 4), 0);
+	assert.equal(zoneIndexForPoint(195, 422, w, h, 4), 3);
+	assert.equal(zoneIndexForPoint(-20, 900, w, h, 4), 2);
+});
+
+test('2 et 3 zones restent des bandes, quelle que soit la position horizontale', () => {
+	for (const x of [0, 200, 389]) {
+		assert.equal(zoneIndexForPoint(x, 100, 390, 900, 3), 0);
+		assert.equal(zoneIndexForPoint(x, 450, 390, 900, 3), 1);
+		assert.equal(zoneIndexForPoint(x, 800, 390, 900, 2), 1);
+	}
+});
+
+test('zoneRects est cohérent avec zoneIndexForPoint', () => {
+	for (const [w, h] of [[375, 667], [390, 844], [1024, 1366]]) {
+		for (const count of [2, 3, 4]) {
+			const rects = zoneRects(w, h, count);
+			assert.equal(rects.length, count);
+			assert.deepEqual(rects.map((r) => r.index), [...Array(count).keys()]);
+			for (const r of rects) {
+				assert.equal(zoneIndexForPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2, w, h, count), r.index);
+				assert.equal(zoneIndexForPoint(r.left + 0.01, r.top + 0.01, w, h, count), r.index);
+				assert.equal(zoneIndexForPoint(r.right - 0.01, r.bottom - 0.01, w, h, count), r.index);
+			}
+		}
+	}
+	assert.equal(zoneRects(0, 800, 4).length, 0);
+	assert.equal(zoneIndexForPoint(NaN, 10, 390, 844, 4), -1);
+	assert.equal(zoneIndexForPoint(10, 10, 390, 844, 0), -1);
+});

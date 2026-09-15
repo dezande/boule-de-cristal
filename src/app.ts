@@ -1,5 +1,5 @@
 import { completesResetDoubleTap, type TapRecord } from './gestures.ts';
-import { zoneIndexForY, zoneBounds } from './zone-logic.ts';
+import { zoneIndexForPoint, zoneRects } from './zone-logic.ts';
 
 /* ================= Types ================= */
 
@@ -83,7 +83,7 @@ const DEFAULTS: Readonly<Settings> = Object.freeze({ zones: 3, values: ['6', '16
 const ZONE_NAMES: Record<ZoneCount, readonly string[]> = {
 	2: ['Haut', 'Bas'],
 	3: ['Haut', 'Milieu', 'Bas'],
-	4: ['Haut', 'Centre haut', 'Centre bas', 'Bas'],
+	4: ['Haut gauche', 'Haut droite', 'Bas gauche', 'Bas droite'],
 };
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -273,7 +273,6 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 
 	const now = performance.now();
 	const rect = stage.getBoundingClientRect();
-	const y = clientY - rect.top;
 	const armed = show.phase === 'pending' || show.phase === 'shown';
 
 	cancelTrackTimers();
@@ -299,7 +298,7 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 		current.startedArmed = false;
 		fadeOut();
 	} else if (!isLocked()) {
-		const index = zoneIndexForY(y, rect.height, settings.zones);
+		const index = zoneIndexForPoint(clientX - rect.left, clientY - rect.top, rect.width, rect.height, settings.zones);
 		if (index >= 0) {
 			arm(index);
 			if (testMode) flashZone(index);
@@ -475,6 +474,8 @@ const form = {
 	rows: settingsEl.querySelectorAll<HTMLElement>('.value-row'),
 	labels: settingsEl.querySelectorAll<HTMLLabelElement>('.value-row label'),
 	inputs: settingsEl.querySelectorAll<HTMLInputElement>('.value-row input'),
+	zonesHint: $('#zones-hint'),
+	valuesHint: $('#values-hint'),
 	delay: $<HTMLInputElement>('#delay'),
 	delayOut: $<HTMLOutputElement>('#delay-out'),
 	fade: $<HTMLInputElement>('#fade'),
@@ -496,6 +497,8 @@ function renderForm(): void {
 	form.rows.forEach((row, i) => {
 		row.hidden = i >= settings.zones;
 	});
+	form.zonesHint.textContent = settings.zones === 4 ? '4 coins de l\'écran' : 'bandes horizontales';
+	form.valuesHint.textContent = settings.zones === 4 ? 'coin par coin' : 'de haut en bas';
 	form.labels.forEach((label, i) => {
 		label.textContent = ZONE_NAMES[settings.zones][i] ?? '';
 	});
@@ -636,12 +639,15 @@ function tag(label: string, value?: string): HTMLSpanElement {
 function renderZones(): void {
 	zonesEl.textContent = '';
 	const rect = stage.getBoundingClientRect();
-	for (const b of zoneBounds(rect.height, settings.zones)) {
+	for (const r of zoneRects(rect.width, rect.height, settings.zones)) {
 		const zone = document.createElement('div');
 		zone.className = 'zone';
-		zone.style.top = `${rect.top + b.top}px`;
-		zone.style.height = `${b.bottom - b.top}px`;
-		zone.append(tag(`${ZONE_NAMES[settings.zones][b.index]} →`, settings.values[b.index]));
+		zone.classList.toggle('right', r.left > 0);
+		zone.style.left = `${rect.left + r.left}px`;
+		zone.style.top = `${rect.top + r.top}px`;
+		zone.style.width = `${r.right - r.left}px`;
+		zone.style.height = `${r.bottom - r.top}px`;
+		zone.append(tag(`${ZONE_NAMES[settings.zones][r.index]} →`, settings.values[r.index]));
 		zonesEl.append(zone);
 	}
 }

@@ -109,7 +109,7 @@
 			<p class="sub">Visible de vous seul. Enregistré sur cet appareil.</p>
 
 			<div class="card">
-				<div class="row-label">Nombre de zones <small>bandes horizontales</small></div>
+				<div class="row-label">Nombre de zones <small id="zones-hint">bandes horizontales</small></div>
 				<div class="seg" role="radiogroup">
 					<button type="button" role="radio" data-zones="2">2</button>
 					<button type="button" role="radio" data-zones="3">3</button>
@@ -118,7 +118,7 @@
 			</div>
 
 			<div class="card">
-				<div class="row-label">Valeurs <small>de haut en bas</small></div>
+				<div class="row-label">Valeurs <small id="values-hint">de haut en bas</small></div>
 				<div class="values">
 					<div class="value-row"><label for="v0"></label><input id="v0" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
 					<div class="value-row"><label for="v1"></label><input id="v1" type="text" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="done"></div>
@@ -168,7 +168,7 @@
 			<details class="card help">
 				<summary>Gestes</summary>
 				<ul>
-					<li>Toucher une bande : arme sa valeur. L'écran se verrouille aussitôt.</li>
+					<li>Toucher une zone (une bande, ou un coin avec 4 zones) : arme sa valeur. L'écran se verrouille aussitôt.</li>
 					<li>Double tap n'importe où, quand un nombre est armé ou affiché : le nombre s'estompe, l'app se réarme.</li>
 					<li>Appui de 3 s n'importe où sur l'écran : ouvre ces réglages (efface le nombre).</li>
 				</ul>
