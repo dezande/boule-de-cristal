@@ -12,23 +12,9 @@ import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { Browser, SCREEN, type Page, type Point } from '../../src/kit/node/chrome.ts';
 import { startStaticServer, type StaticServer } from '../../src/kit/node/static-server.ts';
-
-/** Clé d'enregistrement des réglages (src/settings/store.ts). */
-const STORAGE_KEY = 'voyante:settings:v1';
-/** Réglages rapides pour les tests : apparition immédiate, fondu court. */
-const FAST = { delay: 0, fade: 0.5 };
-/** Durée du fondu de sortie avec FAST, marge comprise : l'app est ensuite réarmée. */
-const FADE_OUT_MS = 900;
-const TEST_TIMEOUT = { timeout: 60_000 };
-
-/** Points de toucher, à l'écart des bords et du centre. */
-const TOP_LEFT: Point = { x: 60, y: 150 };
-const TOP_RIGHT: Point = { x: SCREEN.width - 60, y: 150 };
-const BOTTOM_LEFT: Point = { x: 60, y: SCREEN.height - 150 };
-const BOTTOM_RIGHT: Point = { x: SCREEN.width - 60, y: SCREEN.height - 150 };
-const CENTER: Point = { x: SCREEN.width / 2, y: SCREEN.height / 2 };
-/** Milieu horizontal de la bande `index` sur `count` bandes. */
-const band = (index: number, count: number): Point => ({ x: SCREEN.width / 2, y: ((index + 0.5) * SCREEN.height) / count });
+import {
+	BOTTOM_LEFT, BOTTOM_RIGHT, CENTER, FADE_OUT_MS, FAST, NUMBER, STORAGE_KEY, TEST_TIMEOUT, TOP_LEFT, TOP_RIGHT, band, click, expectCleared, expectShown, isSettingsOpen, openSettings, resetBall, setField, storedSettings, text, turnPhone, waitForReload, openApp,
+} from './helpers.ts';
 
 let server: StaticServer;
 let browser: Browser;
@@ -46,66 +32,9 @@ after(async () => {
 
 /* ================= Outils ================= */
 
-/**
- * Ouvre l'app dans un nouvel onglet avec les réglages `stored` déjà enregistrés
- * (objet, texte brut pour simuler des données abîmées, ou undefined pour aucun réglage),
- * lance `run`, puis vérifie qu'aucune erreur JavaScript n'a eu lieu.
- */
-async function withApp(stored: object | string | undefined, run: (page: Page) => Promise<void>, url = server.url): Promise<void> {
-	const page = await browser.newPage();
-	try {
-		await page.goto(url);
-		const raw = typeof stored === 'string' ? stored : JSON.stringify(stored);
-		await page.evaluate(`localStorage.clear(); ${stored === undefined ? '' : `localStorage.setItem('${STORAGE_KEY}', ${JSON.stringify(raw)})`}`);
-		await page.reload();
-		await page.waitFor(`document.querySelector('#version-badge').textContent`, 'démarrage de l\'app');
-		await run(page);
-		assert.deepEqual(page.errors, [], 'erreurs JavaScript dans la page');
-	} finally {
-		await page.close();
-	}
-}
-
-/** Nombre dans la boule : texte et visibilité. */
-const NUMBER = `({ text: document.querySelector('#number-text').textContent, shown: document.querySelector('#number').classList.contains('shown') })`;
-
-async function expectShown(page: Page, value: string, timeoutMs = 3000): Promise<void> {
-	await page.waitFor(`${NUMBER}.shown && ${NUMBER}.text === ${JSON.stringify(value)}`, `« ${value} » affiché`, timeoutMs, NUMBER);
-}
-
-async function expectCleared(page: Page): Promise<void> {
-	await page.waitFor(`!${NUMBER}.shown`, 'nombre effacé', 3000, NUMBER);
-}
-
-/** Double tap pour effacer (au point `at`), puis attente de la fin du fondu : l'app est de nouveau prête. */
-async function resetBall(page: Page, at: Point = CENTER): Promise<void> {
-	await page.doubleTap(at);
-	await expectCleared(page);
-	await sleep(FADE_OUT_MS);
-}
-
-const isSettingsOpen = `!document.querySelector('#settings').hidden`;
-
-/** Appui maintenu au centre jusqu'à l'ouverture des réglages. */
-async function openSettings(page: Page): Promise<void> {
-	await page.touchStart(CENTER);
-	await page.waitFor(isSettingsOpen, 'réglages ouverts par l\'appui de 3 s', 5000);
-	await page.touchEnd();
-}
-
-/** Réglages enregistrés sur l'appareil. */
-const storedSettings = (page: Page): Promise<Record<string, unknown>> =>
-	page.evaluate(`JSON.parse(localStorage.getItem('${STORAGE_KEY}'))`);
-
-/** Modifie un champ du panneau comme le ferait l'utilisateur (valeur puis événement). */
-const setField = (page: Page, selector: string, value: string, event = 'input'): Promise<unknown> =>
-	page.evaluate(`(() => { const el = document.querySelector('${selector}'); el.value = ${JSON.stringify(value)}; el.dispatchEvent(new Event('${event}', { bubbles: true })); })()`);
-
-const click = (page: Page, selector: string): Promise<unknown> =>
-	page.evaluate(`document.querySelector('${selector}').click()`);
-
-const text = (page: Page, selector: string): Promise<string> =>
-	page.evaluate(`document.querySelector('${selector}').textContent`);
+/** Ouvre l'app servie par le serveur des tests ; voir openApp. */
+const withApp = (stored: object | string | undefined, run: (page: Page) => Promise<void>, url = server.url): Promise<void> =>
+	openApp(browser, url, stored, run);
 
 /* ================= Démarrage ================= */
 
@@ -367,19 +296,6 @@ test('mode test : 3 bandes sur toute la largeur', TEST_TIMEOUT, async () => {
 
 /* ================= Toujours en portrait ================= */
 
-/** Téléphone tourné : vers la gauche (angle 90), vers la droite (angle 270), ou droit (0). */
-async function turnPhone(page: Page, angle: 0 | 90 | 270): Promise<void> {
-	const landscape = angle !== 0;
-	await page.send('Emulation.setDeviceMetricsOverride', {
-		width: landscape ? SCREEN.height : SCREEN.width,
-		height: landscape ? SCREEN.width : SCREEN.height,
-		deviceScaleFactor: 3,
-		mobile: true,
-		screenOrientation: { type: angle === 0 ? 'portraitPrimary' : angle === 90 ? 'landscapePrimary' : 'landscapeSecondary', angle },
-	});
-	await page.waitFor(`document.querySelector('#app').dataset.rotation === '${angle === 0 ? 0 : angle === 90 ? -90 : 90}'`, `rotation pour l'angle ${angle}`, 3000);
-}
-
 test('téléphone en paysage : l’app pivote, la boule garde sa taille et les zones suivent le téléphone', TEST_TIMEOUT, async () => {
 	const W = SCREEN.height; // largeur de l'écran en paysage
 	const H = SCREEN.width;
@@ -445,20 +361,6 @@ test('écran allumé : verrou demandé et vidéo muette en marche après un touc
 });
 
 /* ================= Mises à jour ================= */
-
-/** Attend que la page ait été rechargée (marqueur __avant disparu) et l'app redémarrée. */
-async function waitForReload(page: Page, timeoutMs = 15_000): Promise<void> {
-	const deadline = Date.now() + timeoutMs;
-	while (Date.now() < deadline) {
-		try {
-			if (await page.evaluate<boolean>(`!window.__avant && Boolean(document.querySelector('#version-badge').textContent)`)) return;
-		} catch {
-			// Page en cours de remplacement.
-		}
-		await sleep(100);
-	}
-	throw new Error('Attente dépassée : rechargement automatique après la mise à jour');
-}
 
 test('nouvelle version publiée : nouveau cache, caches des autres apps intacts, réglages conservés, rechargement', TEST_TIMEOUT, async () => {
 	// Copie de dist/ servie à part, où l'on « publie » une nouvelle version.
