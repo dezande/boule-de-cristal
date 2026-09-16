@@ -46,7 +46,7 @@ npm run deploy -- --dry-run # vérifications, build et tests seulement, sans pus
 
 Le suivi utilise GitHub CLI (`gh`) s'il est installé. Sans lui, suivez le déploiement dans l'onglet Actions du dépôt.
 
-Les versions nommées (tags git et Releases GitHub) et le détail de chaque changement sont dans le [journal des versions](CHANGELOG.md).
+Chaque changement se note dans le [journal des versions](CHANGELOG.md), sous « À venir », dans le commit qui le porte : la CI refuse un push qui touche au projet sans toucher à ce fichier, et rien n'est publié. Les versions nommées (tags git `vX.Y.Z` et Releases GitHub) y sont décrites une par une.
 
 ## Développement
 
@@ -61,12 +61,14 @@ npm run serve       # build puis serveur local sur http://localhost:8000
 npm test            # tests unitaires (quelques secondes)
 npm run test:e2e    # tests dans Chrome de l'app compilée (environ 1 min, après npm run build)
 npm run typecheck   # vérification des types
+npm run check:changelog # le journal des versions a-t-il été mis à jour ?
 npm run build       # génère dist/
 ```
 
 ### Tests
 
 - **Tests unitaires** (`tests/logic/`, `npm test`) : la logique pure de `src/logic/`, sous Node. Zone touchée (bandes ou coins), décision de chaque geste (armer, effacer, ouvrir les réglages, annuler), validation des réglages relus sur l'appareil.
+- **Règle du journal** (`tests/tools/`, lancé par `npm test`) : tout changement doit s'accompagner d'une entrée dans `CHANGELOG.md`.
 - **Tests dans Chrome** (`tests/e2e/`, `npm run test:e2e`) : l'app compilée dans Chrome sans interface, sur un écran de téléphone simulé, avec de vrais événements tactiles. Il faut Google Chrome, trouvé automatiquement (sinon, indiquez son chemin dans `CHROME_PATH`). Outils communs dans `helpers.ts`.
   - `app.e2e.ts`, le tour de base : chaque zone, double tap, appui de 3 s (et ses annulations), délai, réglages enregistrés et relus, réglages abîmés, mode test, téléphone tourné (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté.
   - `details.e2e.ts`, les cas limites : double tap pendant le délai, verrouillage pendant tout le fondu, taille du nombre selon ses chiffres, appui de 3 s pendant le délai, 4 coins et mode test téléphone tourné, libellés des curseurs, fondu et luminosité, valeur limitée à 6 caractères, Entrée dans un champ, informations de debug, barre d'état du mode test, message du chrono, mode `?debug`, souris, toucher interrompu par le système, menu contextuel, zoom et défilement bloqués, nouvelle version publiée pendant un tour (pas de rechargement).
@@ -89,3 +91,5 @@ La liste des fichiers mis en cache hors-ligne est calculée au build : un nouvea
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/logic/` | Tests unitaires de `src/logic/` (`npm test`) |
 | `tests/e2e/` | Tests dans Chrome (`npm run test:e2e`) |
+| `tests/tools/` | Tests des outils du dépôt (`npm test`) |
+| `scripts/` | Outils propres à l'app : vérification du journal des versions |

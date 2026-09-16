@@ -4,6 +4,8 @@ Toutes les versions de la boule de cristal, de la plus récente à la plus ancie
 
 Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORRECTIF`. Chaque version correspond à un tag git et à une [Release GitHub](https://github.com/dezande/boule-de-cristal/releases). Les versions `0.x` sont l'histoire du développement, avant que l'app soit complète et jouable en scène.
 
+**Chaque changement s'écrit ici**, sous « À venir », dans le même commit que le changement lui-même : la CI refuse tout push qui touche au projet sans toucher à ce fichier (`npm run check:changelog`). Publier une version, c'est renommer « À venir » en numéro de version et poser le tag.
+
 À ne pas confondre avec le **numéro affiché dans l'app** (en bas à gauche de la scène et dans les réglages) : celui-là est le nombre de commits, calculé au build, qui identifie précisément la version installée sur un téléphone. Le tableau ci-dessous donne la correspondance.
 
 | Version | Commits | Date | En une phrase |
@@ -23,6 +25,13 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 | [0.1.0](#010) | 1 | 2026-09-15 | Première version |
 
 ---
+
+## À venir
+
+Changements en place, pas encore publiés sous un numéro de version.
+
+- **Journal des versions** : ce fichier, les tags git `vX.Y.Z` et les Releases GitHub correspondantes, pour les 18 commits déjà existants comme pour la suite.
+- La CI vérifie à chaque push et chaque pull request que le journal a bien été mis à jour (`scripts/check-changelog.ts`, testé dans `tests/tools/`) : sinon, rien n'est publié.
 
 ## 1.0.1
 
@@ -153,15 +162,15 @@ Première version : une PWA mono-page, 100 % hors-ligne.
 
 ## Publier une nouvelle version
 
-Le déploiement reste automatique : **chaque push sur `main` met l'app à jour** (voir le README). Le tag et la Release sont un geste à part, à faire quand un lot de changements mérite d'être nommé.
+À chaque changement, décrivez-le sous **« À venir »**, dans le commit qui le porte. La CI le vérifie (`npm run check:changelog`) : un push qui touche au projet sans toucher à ce fichier échoue, et rien n'est publié.
+
+Le déploiement, lui, reste automatique : **chaque push sur `main` met l'app à jour** (voir le README). Le tag et la Release sont un geste à part, à faire quand le contenu d'« À venir » mérite d'être nommé : renommez la section en numéro de version, ajoutez sa date, son commit et le nombre de commits (`git rev-list --count HEAD`, le numéro affiché dans l'app), ajoutez la ligne au tableau du haut, puis :
 
 ```sh
 git tag -a v1.1.0 -m "Titre de la version"   # sur le commit à publier
 git push origin v1.1.0
 gh release create v1.1.0 --title "v1.1.0 — Titre" --notes-file notes.md
 ```
-
-Ajoutez la version en haut de ce fichier, avec sa date, son commit et le nombre de commits (`git rev-list --count HEAD`, le numéro affiché dans l'app).
 
 - **Correctif** (`1.0.x`) : corrections, tests, rien de visible en scène.
 - **Mineur** (`1.x.0`) : nouveau geste, nouveau réglage, changement visible sans tout casser.

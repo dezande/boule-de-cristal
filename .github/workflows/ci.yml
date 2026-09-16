@@ -27,6 +27,10 @@ jobs:
           node-version: 24
           cache: npm
 
+      # Chaque changement doit s'accompagner d'une entrée dans CHANGELOG.md.
+      - name: Journal des versions
+        run: node scripts/check-changelog.ts "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}" "${{ github.sha }}"
+
       - run: npm ci
 
       - name: Vérification des types
