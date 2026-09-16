@@ -30,6 +30,7 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 ## À venir
 
 - **`main` est protégée**, avec les mêmes règles que le kit : aucun push direct, tout passe par une pull request, fusionnée en rebase (historique linéaire, pas de commit de fusion) et seulement si la CI est verte, sur une branche à jour. Les discussions de la pull request doivent être résolues ; `main` ne peut être ni réécrite ni supprimée. Les règles valent aussi pour le propriétaire du dépôt. Le README les détaille.
+- **Version de Node figée** (`.nvmrc`, Node 24) pour les machines de développement comme pour la CI : `nvm use` en local, `node-version-file` dans le workflow, `engines` limité à Node 24.
 
 ## 1.1.0
 
