@@ -57,6 +57,7 @@ Quel numéro augmenter :
 ## [Non publié]
 
 - **`main` est protégée**, avec les mêmes règles que le kit : aucun push direct, tout passe par une pull request, fusionnée en rebase (historique linéaire) et seulement si la CI est verte, sur une branche à jour. Les discussions doivent être résolues ; `main` ne peut être ni réécrite ni supprimée ; les règles valent aussi pour le propriétaire du dépôt. Elles sont énoncées une seule fois, dans le kit, et le README y renvoie.
+- **Version de Node figée** (`.nvmrc`, Node 24) pour les machines de développement comme pour la CI : `nvm use` en local, `node-version-file` dans le workflow, `engines` limité à Node 24.
 - **Kit mis à jour en v1.1.0** : `npm run deploy` suit ces règles (il ouvre la pull request, demande la fusion automatique en rebase, attend la CI, puis suit la mise en ligne), et la vérification du journal vient du kit (`src/kit/node/check-changelog.ts`) au lieu d'un script local. Elle contrôle aussi la forme du journal, qui prend le format du kit : sections `## [1.2.0] — 2026-09-16`, « Non publié » en tête, un lien vers chaque publication en bas du fichier.
 
 ## [1.1.0] — 2026-09-16

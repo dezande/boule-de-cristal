@@ -24,7 +24,8 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          # Version de Node figée pour tout le monde (.nvmrc).
+          node-version-file: .nvmrc
           cache: npm
 
       # Forme du journal, et sur main comme en pull request : rien ne change sans une ligne dedans.
