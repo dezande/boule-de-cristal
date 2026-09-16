@@ -10,6 +10,7 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 
 | Version | Commits | Date | En une phrase |
 | --- | --- | --- | --- |
+| [1.3.0] | 27 | 2026-09-16 | Jauge de l'appui long, aides de debug supprimées |
 | [1.2.0] | 25 | 2026-09-16 | Règles de branche du kit, kit v1.1.0, Node figé |
 | [1.1.0] | 21 | 2026-09-16 | Journal des versions, vérifié à chaque changement |
 | [1.0.1] | 18 | 2026-09-16 | Tests étendus à tous les cas |
@@ -55,7 +56,11 @@ Quel numéro augmenter :
 
 ---
 
-## [Non publié]
+## [1.3.0] — 2026-09-16
+
+Commit [`71a8409`](https://github.com/dezande/boule-de-cristal/commit/71a8409) — 27 commits
+
+Les aides posées sur la scène se réduisent à une seule, la jauge de l'appui long.
 
 - **Options de la scène simplifiées** : le mode diagnostic `?debug`, l'affichage de la version sur la scène et la zone du menu en rouge sont supprimés, ainsi que le chrono d'appui. La version et le commit restent lisibles dans les réglages.
 - **Jauge de l'appui long**, reprise de l'Analyseur Q : un anneau se remplit sous le doigt jusqu'à l'ouverture des réglages. Il n'apparaît qu'après une demi-seconde (la durée d'un tap), donc jamais sur le toucher discret d'un tour, suit le doigt même téléphone tourné, et disparaît dès que le doigt glisse, se lève ou que le système interrompt le contact. C'est la seule aide à la répétition masquable qui reste, visible par défaut.
@@ -207,6 +212,7 @@ Première version : une PWA mono-page, 100 % hors-ligne.
 - Le service worker met tout en cache pour le mode avion.
 
 
+[1.3.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.3.0
 [1.2.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.2.0
 [1.1.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.1.0
 [1.0.1]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.0.1
