@@ -39,7 +39,7 @@ Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
 Le nom du cache hors-ligne est calculé au build à partir du contenu de l'app, numéro de version compris. Il n'y a donc rien à incrémenter à la main : dès qu'une nouvelle version est publiée, les téléphones où elle est installée la récupèrent à la prochaine ouverture avec du réseau. L'app se recharge seule si personne n'a touché l'écran depuis l'ouverture et qu'aucun tour n'est en cours ; sinon à l'ouverture suivante.
 
-`npm run deploy` suit ces règles de bout en bout : il vérifie tout en local, ouvre la pull request, demande la fusion automatique en rebase, attend la CI puis la fusion, et suit enfin la mise en ligne.
+`npm run deploy` suit ces règles de bout en bout, **lancé depuis `main`** : les commits restent locaux, le script vérifie tout, ouvre la pull request depuis une branche `publication/…`, demande la fusion automatique en rebase, attend la CI puis la fusion, et suit enfin la mise en ligne.
 
 ```sh
 npm run deploy              # vérifie, ouvre la pull request, fusionne dès que la CI est verte, suit la mise en ligne
@@ -52,7 +52,7 @@ npm run deploy -- --dry-run # vérifications, build et tests seulement, sans rie
 
 ## Développement
 
-Il faut Node 24 ou plus récent. TypeScript et Sass servent uniquement au build : l'app publiée n'a aucune dépendance.
+Il faut Node 24 (version figée dans `.nvmrc` : `nvm use`). TypeScript et Sass servent uniquement au build : l'app publiée n'a aucune dépendance.
 
 Le code commun aux accessoires de scène (écran allumé, portrait, hors-ligne et mises à jour, build, déploiement, pilotage de Chrome) vient du kit **[kit-scene](https://github.com/dezande/kit-scene)**, sous-module git monté dans `src/kit/`. L'app utilise une version précise du kit ; pour prendre la dernière, voir le README du kit.
 
