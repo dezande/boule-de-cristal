@@ -33,45 +33,22 @@ Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
 ## Publication
 
-`main` est protégée, comme dans le kit : **aucun push direct**, tout passe par une pull request, fusionnée **en rebase** et seulement si la CI est verte.
-
-```sh
-git switch -c mon-changement
-# ... les changements, avec l'entrée sous « À venir » dans CHANGELOG.md
-git push -u origin mon-changement
-gh pr create --fill
-gh pr merge --rebase --delete-branch   # refusé tant que la CI n'est pas verte
-```
+`main` est protégée, avec les mêmes règles que le kit — **aucun push direct, fusion en rebase, CI verte** : elles sont énoncées une seule fois, dans les [règles de la branche main](https://github.com/dezande/kit-scene#règles-de-la-branche-main) du kit. Ici, le contrôle qui doit passer est le job « Types, tests, build et tests dans Chrome ».
 
 **Chaque fusion sur `main` met l'app à jour.** GitHub Actions vérifie le journal des versions et les types, lance les tests unitaires, compile, puis teste l'app compilée dans Chrome. Si tout passe, il déploie sur GitHub Pages ; sinon, rien n'est publié — et la pull request ne peut pas être fusionnée.
 
-Les règles du dépôt, en détail :
-
-| Règle | Effet |
-| --- | --- |
-| Pull request obligatoire | Personne ne pousse sur `main`, propriétaire compris. Aucune relecture exigée : on peut fusionner sa propre pull request |
-| Historique linéaire, rebase seul | Pas de commit de fusion : la fusion en rebase est la seule proposée par GitHub |
-| CI verte exigée | Le job « Types, tests, build et tests dans Chrome » doit passer, sur une branche à jour avec `main` |
-| Discussions résolues | Les commentaires de la pull request doivent être clos avant la fusion |
-| Ni force-push ni suppression | `main` ne peut pas être réécrite ni effacée |
-
 Le nom du cache hors-ligne est calculé au build à partir du contenu de l'app, numéro de version compris. Il n'y a donc rien à incrémenter à la main : dès qu'une nouvelle version est publiée, les téléphones où elle est installée la récupèrent à la prochaine ouverture avec du réseau. L'app se recharge seule si personne n'a touché l'écran depuis l'ouverture et qu'aucun tour n'est en cours ; sinon à l'ouverture suivante.
 
-Avant d'ouvrir la pull request, tout se vérifie en local (types, tests unitaires, build et tests dans Chrome) :
+`npm run deploy` suit ces règles de bout en bout : il vérifie tout en local, ouvre la pull request, demande la fusion automatique en rebase, attend la CI puis la fusion, et suit enfin la mise en ligne.
 
 ```sh
-npm run deploy -- --dry-run # vérifications, build et tests seulement, sans push
+npm run deploy              # vérifie, ouvre la pull request, fusionne dès que la CI est verte, suit la mise en ligne
+npm run deploy -- --dry-run # vérifications, build et tests seulement, sans rien pousser
 ```
 
-`npm run deploy` sans option pousse sur `main` : il n'a plus cours ici, `main` le refuse. Suivez la CI avec `gh pr checks --watch`, ou dans l'onglet Actions du dépôt.
+À la main, c'est le déroulé du kit : branche, commit (avec l'entrée sous « Non publié » dans le journal), `git push -u origin ma-branche`, `gh pr create --fill`, `gh pr merge --auto --rebase`. Suivez la CI avec `gh pr checks --watch`, ou dans l'onglet Actions du dépôt. En local, `git config pull.rebase true` garde l'historique linéaire.
 
-En local, tirez toujours en rebase pour garder l'historique linéaire (`git config pull.rebase true`, déjà réglé après un clone si vous le lancez une fois) :
-
-```sh
-git pull --rebase origin main
-```
-
-Chaque changement se note dans le [journal des versions](CHANGELOG.md), sous « À venir », dans le commit qui le porte : la CI refuse un push qui touche au projet sans toucher à ce fichier, et rien n'est publié. Les versions nommées (tags git `vX.Y.Z` et Releases GitHub) y sont décrites une par une.
+**Rien ne change sans une ligne dans le [journal des versions](CHANGELOG.md)**, sous « Non publié », dans le commit qui porte le changement : la vérification du kit (`npm run check:changelog`) contrôle la forme du journal et refuse un changement qui ne s'explique pas, en pull request comme sur `main`. Les versions nommées (tags git `vX.Y.Z` et Releases GitHub) y sont décrites une par une.
 
 ## Développement
 
@@ -93,7 +70,6 @@ npm run build       # génère dist/
 ### Tests
 
 - **Tests unitaires** (`tests/logic/`, `npm test`) : la logique pure de `src/logic/`, sous Node. Zone touchée (bandes ou coins), décision de chaque geste (armer, effacer, ouvrir les réglages, annuler), validation des réglages relus sur l'appareil.
-- **Règle du journal** (`tests/tools/`, lancé par `npm test`) : tout changement doit s'accompagner d'une entrée dans `CHANGELOG.md`.
 - **Tests dans Chrome** (`tests/e2e/`, `npm run test:e2e`) : l'app compilée dans Chrome sans interface, sur un écran de téléphone simulé, avec de vrais événements tactiles. Il faut Google Chrome, trouvé automatiquement (sinon, indiquez son chemin dans `CHROME_PATH`). Outils communs dans `helpers.ts`.
   - `app.e2e.ts`, le tour de base : chaque zone, double tap, appui de 3 s (et ses annulations), délai, réglages enregistrés et relus, réglages abîmés, mode test, téléphone tourné (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté.
   - `details.e2e.ts`, les cas limites : double tap pendant le délai, verrouillage pendant tout le fondu, taille du nombre selon ses chiffres, appui de 3 s pendant le délai, 4 coins et mode test téléphone tourné, libellés des curseurs, fondu et luminosité, valeur limitée à 6 caractères, Entrée dans un champ, informations de debug, barre d'état du mode test, message du chrono, mode `?debug`, souris, toucher interrompu par le système, menu contextuel, zoom et défilement bloqués, nouvelle version publiée pendant un tour (pas de rechargement).
@@ -116,5 +92,3 @@ La liste des fichiers mis en cache hors-ligne est calculée au build : un nouvea
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/logic/` | Tests unitaires de `src/logic/` (`npm test`) |
 | `tests/e2e/` | Tests dans Chrome (`npm run test:e2e`) |
-| `tests/tools/` | Tests des outils du dépôt (`npm test`) |
-| `scripts/` | Outils propres à l'app : vérification du journal des versions |
