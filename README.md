@@ -46,6 +46,8 @@ npm run deploy -- --dry-run # vérifications, build et tests seulement, sans pus
 
 Le suivi utilise GitHub CLI (`gh`) s'il est installé. Sans lui, suivez le déploiement dans l'onglet Actions du dépôt.
 
+Les versions nommées (tags git et Releases GitHub) et le détail de chaque changement sont dans le [journal des versions](CHANGELOG.md).
+
 ## Développement
 
 Il faut Node 24 ou plus récent. TypeScript et Sass servent uniquement au build : l'app publiée n'a aucune dépendance.
