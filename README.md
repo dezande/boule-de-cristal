@@ -10,11 +10,7 @@ Accessoire de scène : une PWA mono-page, 100 % hors-ligne, qui fait apparaître
 | **Double tap n'importe où**, quand un nombre est armé ou affiché | Le nombre s'estompe, l'app se réarme |
 | **Appui de 3 s n'importe où** sur l'écran | Ouvre les réglages (et efface le nombre) |
 
-Les réglages permettent de changer le nombre de zones, les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Avec 2 ou 3 zones, l'écran est coupé en bandes horizontales ; avec 4 zones, en 4 coins (haut gauche, haut droite, bas gauche, bas droite). Trois options y masquent les aides visuelles de la scène, toutes visibles par défaut : la zone du menu en rouge (tout l'écran), le chrono qui compte la durée d'un appui en haut de l'écran, et la petite version en bas à gauche. Masquez-les avant de jouer : le chrono apparaît aussi brièvement au toucher discret. Ils affichent aussi, pour le debug, l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
-
-### Diagnostic
-
-Ajoutez `?debug` à l'adresse (https://dezande.github.io/boule-de-cristal/?debug) pour afficher en haut de l'écran un journal de ce que l'appareil reçoit : version, touchers, durée des appuis, glissements, interruptions par le système. À utiliser dans le navigateur, pas dans l'app installée.
+Les réglages permettent de changer le nombre de zones, les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Avec 2 ou 3 zones, l'écran est coupé en bandes horizontales ; avec 4 zones, en 4 coins (haut gauche, haut droite, bas gauche, bas droite). Une option, visible par défaut, montre la **jauge de l'appui long** : un anneau qui se remplit sous le doigt jusqu'à l'ouverture des réglages, pour s'entraîner au geste. Elle n'apparaît qu'après une demi-seconde, donc jamais sur le toucher discret d'un tour ; masquez-la quand même avant de jouer si le public voit l'écran. Les réglages affichent aussi l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
 
 ## Installation
 
@@ -71,8 +67,8 @@ npm run build       # génère dist/
 
 - **Tests unitaires** (`tests/logic/`, `npm test`) : la logique pure de `src/logic/`, sous Node. Zone touchée (bandes ou coins), décision de chaque geste (armer, effacer, ouvrir les réglages, annuler), validation des réglages relus sur l'appareil.
 - **Tests dans Chrome** (`tests/e2e/`, `npm run test:e2e`) : l'app compilée dans Chrome sans interface, sur un écran de téléphone simulé, avec de vrais événements tactiles. Il faut Google Chrome, trouvé automatiquement (sinon, indiquez son chemin dans `CHROME_PATH`). Outils communs dans `helpers.ts`.
-  - `app.e2e.ts`, le tour de base : chaque zone, double tap, appui de 3 s (et ses annulations), délai, réglages enregistrés et relus, réglages abîmés, mode test, téléphone tourné (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté.
-  - `details.e2e.ts`, les cas limites : double tap pendant le délai, verrouillage pendant tout le fondu, taille du nombre selon ses chiffres, appui de 3 s pendant le délai, 4 coins et mode test téléphone tourné, libellés des curseurs, fondu et luminosité, valeur limitée à 6 caractères, Entrée dans un champ, informations de debug, barre d'état du mode test, message du chrono, mode `?debug`, souris, toucher interrompu par le système, menu contextuel, zoom et défilement bloqués, nouvelle version publiée pendant un tour (pas de rechargement).
+  - `app.e2e.ts`, le tour de base : chaque zone, double tap, appui de 3 s (et ses annulations), jauge de l'appui long, délai, réglages enregistrés et relus, réglages abîmés, mode test, téléphone tourné (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté.
+  - `details.e2e.ts`, les cas limites : double tap pendant le délai, verrouillage pendant tout le fondu, taille du nombre selon ses chiffres, appui de 3 s pendant le délai, 4 coins et mode test téléphone tourné, libellés des curseurs, fondu et luminosité, valeur limitée à 6 caractères, Entrée dans un champ, informations sur l'app, barre d'état du mode test, jauge de l'appui long (posée au point touché, abandonnée si le doigt glisse), souris, toucher interrompu par le système, menu contextuel, zoom et défilement bloqués, nouvelle version publiée pendant un tour (pas de rechargement).
 
 Restent à vérifier sur un vrai téléphone : l'écran toujours allumé, le ressenti des gestes et l'installation sur l'écran d'accueil.
 
@@ -84,7 +80,7 @@ La liste des fichiers mis en cache hors-ligne est calculée au build : un nouvea
 | `src/app.ts` | Point d'entrée : démarrage et mises à jour automatiques (organisation détaillée en tête du fichier) |
 | `src/stage/` | La scène : gestes (`touch.ts`), phases de la boule (`ball.ts`), particules (`dust.ts`) |
 | `src/settings/` | Réglages : validation et enregistrement (`store.ts`), panneau de réglages (`panel.ts`) |
-| `src/rehearsal/` | Aides à la répétition : test des zones, chrono d'appui, version et journal `?debug` |
+| `src/rehearsal/` | Aides à la répétition : test des zones (`test-mode.ts`), jauge de l'appui long (`hold-ring.ts`) |
 | `src/system/` | Accès au DOM et scène |
 | `src/kit/` | Kit commun [kit-scene](https://github.com/dezande/kit-scene) (sous-module) : écran allumé, portrait, service worker et mises à jour, version, styles `#app`, outils de build, déploiement et pilote de Chrome |
 | `src/logic/` | Logique pure testée sous Node : zone touchée (bandes ou 4 coins), gestes, validation des réglages |

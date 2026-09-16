@@ -19,8 +19,7 @@
  *     panel.ts     panneau de réglages
  *   rehearsal/   aides à la répétition, à masquer avant de jouer
  *     test-mode.ts   mode « Test des zones »
- *     hold-timer.ts  chrono d'appui
- *     diagnostic.ts  version du build et journal ?debug
+ *     hold-ring.ts   jauge de l'appui long
  *   system/      services du navigateur
  *     dom.ts         accès au DOM et scène
  *   kit/         code commun des accessoires de scène (sous-module kit-scene, voir son README) :
@@ -37,16 +36,17 @@
 
 // En premier : la rotation (verrou portrait) est calculée avant que les autres modules mesurent l'écran.
 import './kit/web/orientation.ts';
+import { BUILD } from './kit/web/build.ts';
 import { setupUpdates } from './kit/web/updates.ts';
 import { keepScreenAwake } from './kit/web/wake-lock.ts';
-import { BUILD, debugLog } from './rehearsal/diagnostic.ts';
 import { applySettings, isSettingsOpen } from './settings/panel.ts';
 import { getPhase } from './stage/ball.ts';
 import { spawnDust } from './stage/dust.ts';
 import { forgetTouches, wasTouchedSinceShown } from './stage/touch.ts';
-import { $ } from './system/dom.ts';
 
-$('#version-badge').textContent = `v${BUILD.version} · ${BUILD.commit}`;
+// Version du build sur la racine du document : invisible en scène, lisible dans l'inspecteur
+// et par les tests, qui s'en servent pour reconnaître la version chargée.
+document.documentElement.dataset.version = BUILD.version;
 applySettings();
 spawnDust(18);
 void keepScreenAwake();
@@ -64,5 +64,4 @@ setupUpdates({
 	onVisible: () => {
 		if (isIdle()) forgetTouches();
 	},
-	log: debugLog,
 });

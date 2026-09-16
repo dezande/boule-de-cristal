@@ -93,9 +93,7 @@
 			<div class="vignette"></div>
 		</main>
 
-		<div id="version-badge" aria-hidden="true"></div>
-		<div id="hold-timer" aria-hidden="true" hidden></div>
-		<div id="menu-zone" aria-hidden="true"><span>Zone du menu : appui 3 s n'importe où</span></div>
+		<div id="hold-ring" aria-hidden="true" hidden><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="44"/><circle class="fill" cx="50" cy="50" r="44" pathLength="100"/></svg></div>
 		<div id="dim"></div>
 		<div id="zones" hidden></div>
 
@@ -150,9 +148,8 @@
 				</div>
 
 				<div class="card options">
-					<label class="toggle-row" for="show-version">Afficher la version sur la scène <input id="show-version" type="checkbox"></label>
-					<label class="toggle-row" for="show-menu-zone">Afficher la zone du menu en rouge <input id="show-menu-zone" type="checkbox"></label>
-					<label class="toggle-row" for="show-hold-timer">Afficher le chrono d'appui <input id="show-hold-timer" type="checkbox"></label>
+					<p class="hint">Aide à la répétition : à masquer avant de jouer si le public voit l'écran.</p>
+					<label class="toggle-row" for="show-hold-ring">Afficher la jauge de l'appui long <input id="show-hold-ring" type="checkbox"></label>
 				</div>
 
 				<div class="card about">

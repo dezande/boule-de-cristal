@@ -40,7 +40,7 @@ const withApp = (stored: object | string | undefined, run: (page: Page) => Promi
 
 test('démarrage : tous les modules se chargent, sans erreur JavaScript', TEST_TIMEOUT, async () => {
 	await withApp(undefined, async (page) => {
-		assert.match(await text(page, '#version-badge'), /^v\S+ · /);
+		assert.match(await page.evaluate<string>(`document.documentElement.dataset.version`), /^\S+$/);
 		assert.equal(await page.evaluate(`document.querySelectorAll('#dust .mote').length`), 18);
 		assert.equal(await page.evaluate(isSettingsOpen), false);
 		assert.deepEqual(await page.evaluate(NUMBER), { text: '', shown: false });
@@ -162,17 +162,21 @@ test('appui long annulé : doigt levé trop tôt, doigt qui glisse, deuxième do
 	});
 });
 
-test('chrono d’appui : visible pendant l’appui, masquable dans les réglages', TEST_TIMEOUT, async () => {
+test('jauge de l’appui long : se remplit pendant l’appui, masquable dans les réglages', TEST_TIMEOUT, async () => {
+	const ring = `document.querySelector('#hold-ring')`;
 	await withApp({ ...FAST }, async (page) => {
 		await page.touchStart(CENTER);
-		await page.waitFor(`!document.querySelector('#hold-timer').hidden && document.querySelector('#hold-timer').textContent.includes('/ 3 s')`, 'chrono affiché');
+		await page.waitFor(`!${ring}.hidden && ${ring}.classList.contains('run')`, 'jauge lancée');
+		// Elle se remplit sur le temps qui reste après le délai d'apparition (3 s d'appui - 0,5 s).
+		assert.equal(await page.evaluate(`${ring}.style.getPropertyValue('--ring-duration')`), '2500ms');
+		assert.equal(await page.evaluate(`${ring}.style.getPropertyValue('--ring-delay')`), '500ms');
 		await page.touchEnd();
-		await page.waitFor(`document.querySelector('#hold-timer').textContent.startsWith('relâché à')`, 'chrono figé au relâchement');
+		await page.waitFor(`${ring}.hidden`, 'jauge masquée au relâchement');
 	});
-	await withApp({ ...FAST, showHoldTimer: false }, async (page) => {
+	await withApp({ ...FAST, showHoldRing: false }, async (page) => {
 		await page.touchStart(CENTER);
-		await sleep(500);
-		assert.equal(await page.evaluate(`document.querySelector('#hold-timer').hidden`), true);
+		await sleep(700);
+		assert.equal(await page.evaluate(`${ring}.hidden`), true, 'jauge masquée par les réglages');
 		await page.touchEnd();
 	});
 });
@@ -198,26 +202,28 @@ test('réglages : chaque modification est appliquée, enregistrée et relue au r
 		assert.equal(await text(page, '#brightness-out'), '50 %');
 		assert.equal(await page.evaluate(`document.documentElement.style.getPropertyValue('--dim')`), '0.5');
 
-		await click(page, '#show-version');
-		await click(page, '#show-menu-zone');
-		assert.equal(await page.evaluate(`document.querySelector('#version-badge').hidden`), true);
-		assert.equal(await page.evaluate(`document.querySelector('#menu-zone').hidden`), true);
+		await click(page, '#show-hold-ring');
 
 		const stored = await storedSettings(page);
 		assert.equal(stored.zones, 4);
 		assert.deepEqual(stored.values, ['6', '42', '26', '36']);
 		assert.equal(stored.delay, 1);
 		assert.equal(stored.brightness, 50);
-		assert.equal(stored.showVersion, false);
+		assert.equal(stored.showHoldRing, false);
 
 		// Fermeture, puis redémarrage de l'app : les réglages sont conservés et utilisés.
 		await click(page, '#close-btn');
 		assert.equal(await page.evaluate(isSettingsOpen), false);
 		await page.reload();
-		await page.waitFor(`document.querySelector('#version-badge').textContent`, 'redémarrage');
-		assert.equal(await page.evaluate(`document.querySelector('#version-badge').hidden`), true);
+		await page.waitFor(`document.documentElement.dataset.version`, 'redémarrage');
 		await page.tap(TOP_RIGHT);
 		await expectShown(page, '42', 3000);
+
+		// L'option relue sur l'appareil : la jauge reste masquée pendant un appui.
+		await page.touchStart(CENTER);
+		await sleep(700);
+		assert.equal(await page.evaluate(`document.querySelector('#hold-ring').hidden`), true);
+		await page.touchEnd();
 	});
 });
 
@@ -383,7 +389,7 @@ test('nouvelle version publiée : nouveau cache, caches des autres apps intacts,
 
 			await page.evaluate(`window.__avant = true; navigator.serviceWorker.getRegistration().then((r) => r.update())`);
 			await waitForReload(page);
-			await page.waitFor(`document.querySelector('#version-badge').textContent.startsWith('v9999 ')`, 'nouvelle version affichée', 5000, `document.querySelector('#version-badge').textContent`);
+			await page.waitFor(`document.documentElement.dataset.version === '9999'`, 'nouvelle version chargée', 5000, `document.documentElement.dataset.version`);
 			assert.deepEqual((await page.evaluate<string[]>(`caches.keys()`)).sort(), ['analyseur-q-autre-app', newCache].sort());
 			assert.deepEqual(await storedSettings(page), { ...(await storedSettings(page)), ...stored }, 'réglages conservés');
 			await page.tap(BOTTOM_RIGHT);
@@ -421,7 +427,7 @@ test('hors-ligne : tous les fichiers sont en cache et l’app fonctionne serveur
 		assert.equal(await page.evaluate(`fetch('${offlineServer.url}inexistant.js').then(() => 'joignable', () => 'injoignable')`), 'injoignable', 'le serveur devrait être arrêté');
 
 		await page.reload();
-		await page.waitFor(`document.querySelector('#version-badge').textContent`, 'redémarrage serveur arrêté');
+		await page.waitFor(`document.documentElement.dataset.version`, 'redémarrage serveur arrêté');
 		await page.tap(BOTTOM_LEFT);
 		await expectShown(page, '26');
 		assert.deepEqual(page.errors, [], 'erreurs JavaScript dans la page');

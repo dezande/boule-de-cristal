@@ -1,0 +1,59 @@
+@use "tokens" as *;
+
+// Jauge de l'appui long : invisible au début, elle se remplit jusqu'à l'ouverture des réglages.
+// Posée sur la scène, elle laisse passer les touchers. Positionnée par stage/touch.ts au point
+// touché : « fixed » se place dans le repère de l'app, pivotée avec elle (kit/web/orientation.ts).
+#hold-ring {
+	position: fixed;
+	z-index: 12;
+	width: 96px;
+	height: 96px;
+	margin: -48px 0 0 -48px;
+	opacity: 0;
+	pointer-events: none;
+
+	svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+		// Le remplissage part du haut de l'anneau.
+		transform: rotate(-90deg);
+	}
+
+	circle {
+		fill: none;
+		stroke-width: 6;
+	}
+
+	.track {
+		stroke: rgba(243, 226, 176, .18);
+	}
+
+	// pathLength="100" : la longueur du cercle vaut 100, le remplissage se joue sur le décalage.
+	.fill {
+		stroke: $gold;
+		stroke-linecap: round;
+		stroke-dasharray: 100;
+		stroke-dashoffset: 100;
+	}
+
+	&.run {
+		animation: ring-show .2s ease var(--ring-delay) forwards;
+
+		.fill {
+			animation: ring-fill var(--ring-duration) linear var(--ring-delay) forwards;
+		}
+	}
+}
+
+@keyframes ring-show {
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes ring-fill {
+	to {
+		stroke-dashoffset: 0;
+	}
+}

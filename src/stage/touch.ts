@@ -2,15 +2,14 @@
  * Gestes sur la scène (doigt, ou souris pour répéter sur ordinateur).
  * Les décisions (armer, effacer, ouvrir les réglages, annuler) sont prises par GestureTracker
  * (logic/gestures.ts, testé sous Node) ; ce module relaie les événements du navigateur
- * et applique les effets : boule, chrono, réglages, journal de diagnostic.
+ * et applique les effets : boule, jauge de l'appui long, réglages.
  */
 
 import { appPoint } from '../kit/web/orientation.ts';
 import { keepScreenAwake } from '../kit/web/wake-lock.ts';
 import { GestureTracker, HOLD, isMouseAfterTouch, type PointerId } from '../logic/gestures.ts';
 import { zoneIndexForPoint } from '../logic/zone-logic.ts';
-import { debugLog } from '../rehearsal/diagnostic.ts';
-import { formatSeconds, startHoldTimer, stopHoldTimer } from '../rehearsal/hold-timer.ts';
+import { hideHoldRing, showHoldRing } from '../rehearsal/hold-ring.ts';
 import { flashZone } from '../rehearsal/test-mode.ts';
 import { openSettings } from '../settings/panel.ts';
 import { settings } from '../settings/store.ts';
@@ -46,25 +45,23 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	const now = performance.now();
 	const action = gestures.press(id, clientX, clientY, fingers, now, { armed: isArmed(), locked: isLocked() });
 	if (action === 'cancel') {
-		debugLog(`toucher : ${fingers} doigts, geste annulé`);
-		stopHoldTimer('plusieurs doigts : annulé');
+		hideHoldRing();
 		return;
 	}
 
+	// Coordonnées dans le repère de la scène, qui peut être pivotée (kit/web/orientation.ts),
+	// comme attendu par logic/zone-logic.ts : « haut » reste le haut du téléphone.
+	const point = appPoint(clientX, clientY);
+
 	// Tout doigt posé peut devenir l'appui long qui ouvre les réglages.
-	debugLog(`posé (${Math.round(clientX)}, ${Math.round(clientY)}) : réglages dans ${HOLD.settingsMs / 1000} s si le doigt reste posé`);
 	holdTimer = window.setTimeout(() => {
 		if (gestures.holdCompleted(id)) openSettings();
 	}, HOLD.settingsMs);
-	startHoldTimer(now, HOLD.settingsMs);
+	showHoldRing(point.x, point.y, HOLD.settingsMs);
 
 	if (action === 'reset') {
-		debugLog('double tap : la boule s\'efface');
 		fadeOut();
 	} else if (action === 'arm') {
-		// Coordonnées dans le repère de la scène, qui peut être pivotée (kit/web/orientation.ts),
-		// comme attendu par logic/zone-logic.ts : « haut » reste le haut du téléphone.
-		const point = appPoint(clientX, clientY);
 		const index = zoneIndexForPoint(point.x, point.y, stage.clientWidth, stage.clientHeight, settings.zones);
 		if (index >= 0) {
 			arm(index);
@@ -75,21 +72,16 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 
 /** Doigt déplacé : au-delà de la tolérance, l'appui long est abandonné. */
 function move(id: PointerId, clientX: number, clientY: number): void {
-	const distance = gestures.move(id, clientX, clientY);
-	if (distance === null) return;
+	if (gestures.move(id, clientX, clientY) === null) return;
 	cancelHold();
-	stopHoldTimer('doigt glissé : annulé');
-	debugLog(`glissé de ${Math.round(distance)} px : appui annulé`);
+	hideHoldRing();
 }
 
 /** Doigt levé, ou contact interrompu par le système. */
 function release(id: PointerId, interrupted = false): void {
-	const contact = gestures.release(id, performance.now(), interrupted);
-	if (!contact) return;
+	if (!gestures.release(id, performance.now(), interrupted)) return;
 	cancelHold();
-	const reason = interrupted ? 'INTERROMPU par le système (touchcancel)' : 'levé';
-	debugLog(`${reason} après ${(contact.durationMs / 1000).toFixed(1)} s, glissement max ${Math.round(contact.driftPx)} px`);
-	if (!contact.moved) stopHoldTimer(interrupted ? 'interrompu par le système' : `relâché à ${formatSeconds(contact.durationMs)}`);
+	hideHoldRing();
 }
 
 /* ---------- Écouteurs ---------- */
@@ -130,10 +122,7 @@ window.addEventListener('mouseup', () => release('mouse'));
 const elementOf = (target: EventTarget | null): Element | null =>
 	target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
 
-document.addEventListener('contextmenu', (e) => {
-	e.preventDefault();
-	debugLog('menu contextuel (appui long système) bloqué');
-});
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('selectstart', (e) => {
 	// La sélection reste possible dans les champs de saisie des réglages.
 	if (!elementOf(e.target)?.closest('input')) e.preventDefault();

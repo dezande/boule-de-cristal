@@ -1,12 +1,12 @@
 /*
- * Panneau de réglages : formulaire, informations de debug, ouverture et fermeture.
+ * Panneau de réglages : formulaire, informations sur l'app, ouverture et fermeture.
  * Il s'ouvre par un appui de 3 s sur la scène (stage/touch.ts).
  */
 
+import { BUILD } from '../kit/web/build.ts';
 import { describeWake, keepScreenAwake, onWakeChange } from '../kit/web/wake-lock.ts';
 import { MAX_VALUE_LENGTH } from '../logic/settings.ts';
-import { BUILD, debugLog } from '../rehearsal/diagnostic.ts';
-import { hideHoldTimer } from '../rehearsal/hold-timer.ts';
+import { hideHoldRing } from '../rehearsal/hold-ring.ts';
 import { setTestMode } from '../rehearsal/test-mode.ts';
 import { hardReset } from '../stage/ball.ts';
 import { $ } from '../system/dom.ts';
@@ -46,26 +46,20 @@ const SLIDERS = [
 	{ key: 'brightness', input: $<HTMLInputElement>('#brightness'), output: $<HTMLOutputElement>('#brightness-out'), label: (v: number) => `${v} %` },
 ] as const;
 
-/** Cases à cocher des aides visuelles sur la scène. */
+/** Cases à cocher des aides à la répétition. */
 const TOGGLES = [
-	{ key: 'showVersion', input: $<HTMLInputElement>('#show-version') },
-	{ key: 'showHoldTimer', input: $<HTMLInputElement>('#show-hold-timer') },
-	{ key: 'showMenuZone', input: $<HTMLInputElement>('#show-menu-zone') },
+	{ key: 'showHoldRing', input: $<HTMLInputElement>('#show-hold-ring') },
 ] as const;
 
 /* ---------- Affichage ---------- */
 
 const root = document.documentElement;
-const versionBadge = $('#version-badge');
-const menuZoneEl = $('#menu-zone');
 
-/** Répercute les réglages sur la scène : fondu, luminosité et aides visuelles. */
+/** Répercute les réglages sur la scène : fondu, luminosité et aide à la répétition. */
 export function applySettings(): void {
 	root.style.setProperty('--fade', `${settings.fade}s`);
 	root.style.setProperty('--dim', String((100 - settings.brightness) / 100));
-	versionBadge.hidden = !settings.showVersion;
-	menuZoneEl.hidden = !settings.showMenuZone;
-	if (!settings.showHoldTimer) hideHoldTimer();
+	if (!settings.showHoldRing) hideHoldRing();
 }
 
 /** Remplit le panneau avec les réglages en cours. */
@@ -91,7 +85,7 @@ function renderForm(): void {
 	for (const { key, input } of TOGGLES) input.checked = settings[key];
 }
 
-/** Remplit la carte d'informations de debug : version, cache hors-ligne, mode d'affichage. */
+/** Remplit la carte d'informations : version, cache hors-ligne, mode d'affichage. */
 function renderAbout(): void {
 	$('#about-version').textContent = BUILD.version;
 	$('#about-commit').textContent = BUILD.commit;
@@ -171,8 +165,7 @@ function blurActiveElement(): void {
 
 /** Ouvre les réglages : efface la boule et quitte le mode test. */
 export function openSettings(): void {
-	debugLog('réglages ouverts');
-	hideHoldTimer();
+	hideHoldRing();
 	hardReset();
 	setTestMode(false);
 	renderForm();
