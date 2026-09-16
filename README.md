@@ -33,18 +33,43 @@ Pour vérifier le fonctionnement hors-ligne, relancez l'app en mode avion.
 
 ## Publication
 
-**Chaque push sur `main` met l'app à jour.** GitHub Actions vérifie les types, lance les tests unitaires, compile, puis teste l'app compilée dans Chrome. Si tout passe, il déploie sur GitHub Pages ; sinon, rien n'est publié.
+`main` est protégée, comme dans le kit : **aucun push direct**, tout passe par une pull request, fusionnée **en rebase** et seulement si la CI est verte.
+
+```sh
+git switch -c mon-changement
+# ... les changements, avec l'entrée sous « À venir » dans CHANGELOG.md
+git push -u origin mon-changement
+gh pr create --fill
+gh pr merge --rebase --delete-branch   # refusé tant que la CI n'est pas verte
+```
+
+**Chaque fusion sur `main` met l'app à jour.** GitHub Actions vérifie le journal des versions et les types, lance les tests unitaires, compile, puis teste l'app compilée dans Chrome. Si tout passe, il déploie sur GitHub Pages ; sinon, rien n'est publié — et la pull request ne peut pas être fusionnée.
+
+Les règles du dépôt, en détail :
+
+| Règle | Effet |
+| --- | --- |
+| Pull request obligatoire | Personne ne pousse sur `main`, propriétaire compris. Aucune relecture exigée : on peut fusionner sa propre pull request |
+| Historique linéaire, rebase seul | Pas de commit de fusion : la fusion en rebase est la seule proposée par GitHub |
+| CI verte exigée | Le job « Types, tests, build et tests dans Chrome » doit passer, sur une branche à jour avec `main` |
+| Discussions résolues | Les commentaires de la pull request doivent être clos avant la fusion |
+| Ni force-push ni suppression | `main` ne peut pas être réécrite ni effacée |
 
 Le nom du cache hors-ligne est calculé au build à partir du contenu de l'app, numéro de version compris. Il n'y a donc rien à incrémenter à la main : dès qu'une nouvelle version est publiée, les téléphones où elle est installée la récupèrent à la prochaine ouverture avec du réseau. L'app se recharge seule si personne n'a touché l'écran depuis l'ouverture et qu'aucun tour n'est en cours ; sinon à l'ouverture suivante.
 
-Pour publier en suivant le déploiement depuis le terminal :
+Avant d'ouvrir la pull request, tout se vérifie en local (types, tests unitaires, build et tests dans Chrome) :
 
 ```sh
-npm run deploy              # vérifie en local, pousse, suit GitHub Actions et contrôle le site
 npm run deploy -- --dry-run # vérifications, build et tests seulement, sans push
 ```
 
-Le suivi utilise GitHub CLI (`gh`) s'il est installé. Sans lui, suivez le déploiement dans l'onglet Actions du dépôt.
+`npm run deploy` sans option pousse sur `main` : il n'a plus cours ici, `main` le refuse. Suivez la CI avec `gh pr checks --watch`, ou dans l'onglet Actions du dépôt.
+
+En local, tirez toujours en rebase pour garder l'historique linéaire (`git config pull.rebase true`, déjà réglé après un clone si vous le lancez une fois) :
+
+```sh
+git pull --rebase origin main
+```
 
 Chaque changement se note dans le [journal des versions](CHANGELOG.md), sous « À venir », dans le commit qui le porte : la CI refuse un push qui touche au projet sans toucher à ce fichier, et rien n'est publié. Les versions nommées (tags git `vX.Y.Z` et Releases GitHub) y sont décrites une par une.
 
