@@ -10,6 +10,7 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 
 | Version | Commits | Date | En une phrase |
 | --- | --- | --- | --- |
+| [1.1.0](#110) | 21 | 2026-09-16 | Journal des versions, vérifié à chaque changement |
 | [1.0.1](#101) | 18 | 2026-09-16 | Tests étendus à tous les cas |
 | [1.0.0](#100) | 17 | 2026-09-15 | Toujours en portrait, écran allumé fiable, mises à jour sûres, via le kit |
 | [0.11.0](#0110) | 16 | 2026-09-15 | Code découpé en dossiers et tests dans Chrome |
@@ -28,10 +29,18 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 
 ## À venir
 
-Changements en place, pas encore publiés sous un numéro de version.
+Rien pour l'instant : le prochain changement s'écrit ici.
 
-- **Journal des versions** : ce fichier, les tags git `vX.Y.Z` et les Releases GitHub correspondantes, pour les 18 commits déjà existants comme pour la suite.
-- La CI vérifie à chaque push et chaque pull request que le journal a bien été mis à jour (`scripts/check-changelog.ts`, testé dans `tests/tools/`) : sinon, rien n'est publié.
+## 1.1.0
+
+**2026-09-16** — commits [`d542aaf`](https://github.com/dezande/boule-de-cristal/commit/d542aaf), [`0f2d640`](https://github.com/dezande/boule-de-cristal/commit/0f2d640) — 21 commits
+
+Rien ne change en scène : le projet se dote d'un journal des versions et d'une règle pour le tenir à jour.
+
+- **Ce fichier** : les 18 commits du projet regroupés en 13 versions semver, chacune avec sa date, ses commits et le numéro affiché dans l'app (le nombre de commits).
+- **Tags git et Releases GitHub** posés rétroactivement sur les commits d'origine, de `v0.1.0` à `v1.0.1`.
+- **Le journal est vérifié à chaque changement** : `scripts/check-changelog.ts` compare les fichiers modifiés entre deux commits et échoue dès qu'autre chose que `CHANGELOG.md` a changé sans que le journal ait changé. La CI le lance avant toute autre étape, sur chaque push et chaque pull request ; en cas d'échec, rien n'est publié. En local, `npm run check:changelog`. La règle est testée dans `tests/tools/`.
+- Une section **« À venir »** recueille les changements non publiés ; la publier, c'est la renommer en numéro de version et poser le tag.
 
 ## 1.0.1
 
