@@ -10,6 +10,7 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 
 | Version | Commits | Date | En une phrase |
 | --- | --- | --- | --- |
+| [1.2.0] | 25 | 2026-09-16 | Règles de branche du kit, kit v1.1.0, Node figé |
 | [1.1.0] | 21 | 2026-09-16 | Journal des versions, vérifié à chaque changement |
 | [1.0.1] | 18 | 2026-09-16 | Tests étendus à tous les cas |
 | [1.0.0] | 17 | 2026-09-15 | Toujours en portrait, écran allumé fiable, mises à jour sûres, via le kit |
@@ -54,7 +55,11 @@ Quel numéro augmenter :
 
 ---
 
-## [Non publié]
+## [1.2.0] — 2026-09-16
+
+Commits [`513c25a`](https://github.com/dezande/boule-de-cristal/commit/513c25a), [`36b139d`](https://github.com/dezande/boule-de-cristal/commit/36b139d), [`3b5e76e`](https://github.com/dezande/boule-de-cristal/commit/3b5e76e) — 25 commits
+
+Rien ne change en scène : l'app adopte les règles de branche du kit et sa version `v1.1.0`.
 
 - **`main` est protégée**, avec les mêmes règles que le kit : aucun push direct, tout passe par une pull request, fusionnée en rebase (historique linéaire) et seulement si la CI est verte, sur une branche à jour. Les discussions doivent être résolues ; `main` ne peut être ni réécrite ni supprimée ; les règles valent aussi pour le propriétaire du dépôt. Elles sont énoncées une seule fois, dans le kit, et le README y renvoie.
 - **Version de Node figée** (`.nvmrc`, Node 24) pour les machines de développement comme pour la CI : `nvm use` en local, `node-version-file` dans le workflow, `engines` limité à Node 24.
@@ -197,6 +202,7 @@ Première version : une PWA mono-page, 100 % hors-ligne.
 - Le service worker met tout en cache pour le mode avion.
 
 
+[1.2.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.2.0
 [1.1.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.1.0
 [1.0.1]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.0.1
 [1.0.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.0.0
