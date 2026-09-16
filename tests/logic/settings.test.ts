@@ -17,17 +17,21 @@ test('rien d’enregistré, ou pas un objet : réglages par défaut', () => {
 });
 
 test('réglages valides conservés tels quels', () => {
-	const valid = { zones: 4, values: ['1', '22', '333', '4444'], delay: 2.5, fade: 0.8, brightness: 45, showVersion: false, showHoldTimer: false, showMenuZone: false };
+	const valid = { zones: 4, values: ['1', '22', '333', '4444'], delay: 2.5, fade: 0.8, brightness: 45, showHoldRing: false };
 	assert.deepEqual(sanitizeSettings(valid), valid);
 });
 
-test('ancienne version sans les options d’affichage : options visibles par défaut', () => {
+test('ancienne version sans l’option d’affichage : la jauge est visible par défaut', () => {
 	const old = sanitizeSettings({ zones: 2, values: ['7', '8'], delay: 1, fade: 2, brightness: 80 });
 	assert.equal(old.zones, 2);
 	assert.deepEqual(old.values, ['7', '8', '26', '36']);
-	assert.equal(old.showVersion, true);
-	assert.equal(old.showHoldTimer, true);
-	assert.equal(old.showMenuZone, true);
+	assert.equal(old.showHoldRing, true);
+});
+
+test('options supprimées d’une ancienne version : ignorées', () => {
+	const old = sanitizeSettings({ showVersion: false, showHoldTimer: false, showMenuZone: false });
+	assert.deepEqual(Object.keys(old).filter((key) => key.startsWith('show')), ['showHoldRing']);
+	assert.equal(old.showHoldRing, true);
 });
 
 /* ---------- Nombre de zones ---------- */
@@ -77,11 +81,11 @@ test('curseurs qui ne sont pas des nombres finis : valeur par défaut', () => {
 	}
 });
 
-/* ---------- Options d'affichage ---------- */
+/* ---------- Option d'affichage ---------- */
 
-test('options d’affichage : seulement de vrais booléens', () => {
-	assert.equal(sanitizeSettings({ showVersion: false }).showVersion, false);
-	for (const v of ['false', 0, null, 'non']) assert.equal(sanitizeSettings({ showVersion: v }).showVersion, true, String(v));
+test('jauge de l’appui long : seulement de vrais booléens', () => {
+	assert.equal(sanitizeSettings({ showHoldRing: false }).showHoldRing, false);
+	for (const v of ['false', 0, null, 'non']) assert.equal(sanitizeSettings({ showHoldRing: v }).showHoldRing, true, String(v));
 });
 
 /* ---------- Propriétés générales ---------- */

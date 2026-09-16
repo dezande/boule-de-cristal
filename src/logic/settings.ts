@@ -18,10 +18,8 @@ export interface Settings {
 	fade: number;
 	/** Luminosité de la scène, en pourcentage. */
 	brightness: number;
-	/** Aides visuelles sur la scène, à masquer avant de jouer. */
-	showVersion: boolean;
-	showHoldTimer: boolean;
-	showMenuZone: boolean;
+	/** Jauge de l'appui long sur la scène : aide à la répétition, à masquer avant de jouer. */
+	showHoldRing: boolean;
 }
 
 /** Longueur maximale d'une valeur (le champ de saisie a le même maxlength). */
@@ -33,9 +31,7 @@ export const DEFAULTS: Readonly<Settings> = Object.freeze({
 	delay: 3,
 	fade: 1.5,
 	brightness: 100,
-	showVersion: true,
-	showHoldTimer: true,
-	showMenuZone: true,
+	showHoldRing: true,
 });
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -63,8 +59,6 @@ export function sanitizeSettings(raw: unknown): Settings {
 		delay: Math.round(num(src.delay, DEFAULTS.delay, 0, 10) * 2) / 2,
 		fade: Math.round(num(src.fade, DEFAULTS.fade, 0.5, 6) * 10) / 10,
 		brightness: Math.round(num(src.brightness, DEFAULTS.brightness, 30, 100)),
-		showVersion: bool(src.showVersion, DEFAULTS.showVersion),
-		showHoldTimer: bool(src.showHoldTimer, DEFAULTS.showHoldTimer),
-		showMenuZone: bool(src.showMenuZone, DEFAULTS.showMenuZone),
+		showHoldRing: bool(src.showHoldRing, DEFAULTS.showHoldRing),
 	};
 }

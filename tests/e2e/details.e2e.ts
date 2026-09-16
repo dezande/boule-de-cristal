@@ -171,7 +171,7 @@ test('réglages : libellés des curseurs, fondu et luminosité appliqués, valeu
 	});
 });
 
-test('réglages : informations de debug remplies (version, commit, cache, affichage, écran)', TEST_TIMEOUT, async () => {
+test('réglages : informations sur l’app remplies (version, commit, cache, affichage, écran)', TEST_TIMEOUT, async () => {
 	await withApp(FAST, async (page) => {
 		await openSettings(page);
 		assert.match(await text(page, '#about-version'), /^\S+$/);
@@ -201,26 +201,21 @@ test('mode test : la barre d’état suit chaque phase du tour', TEST_TIMEOUT, a
 	});
 });
 
-test('chrono d’appui : message au relâchement, puis masqué', TEST_TIMEOUT, async () => {
-	await withApp({ delay: 5, fade: 0.5, showHoldTimer: true }, async (page) => {
+test('jauge de l’appui long : posée au point touché, abandonnée si le doigt glisse', TEST_TIMEOUT, async () => {
+	const ring = `document.querySelector('#hold-ring')`;
+	await withApp({ delay: 5, fade: 0.5 }, async (page) => {
 		await page.touchStart(CENTER);
-		await sleep(1200);
+		await page.waitFor(`!${ring}.hidden`, 'jauge affichée');
+		assert.deepEqual(
+			await page.evaluate<{ left: string; top: string }>(`({ left: ${ring}.style.left, top: ${ring}.style.top })`),
+			{ left: `${CENTER.x}px`, top: `${CENTER.y}px` },
+			'jauge centrée sur le doigt',
+		);
+		// Doigt glissé au-delà de la tolérance : l'appui long est abandonné, la jauge disparaît.
+		await page.touchMove({ x: CENTER.x, y: CENTER.y + 120 });
+		await page.waitFor(`${ring}.hidden`, 'jauge abandonnée');
 		await page.touchEnd();
-		const timer = `document.querySelector('#hold-timer')`;
-		assert.match(await page.evaluate<string>(`${timer}.textContent`), /^relâché à 1,[0-9] s$/);
-		await page.waitFor(`${timer}.hidden`, 'chrono masqué', 3000);
 	});
-});
-
-test('mode ?debug : journal affiché et alimenté ; absent sans ?debug', TEST_TIMEOUT, async () => {
-	await withApp(FAST, async (page) => {
-		assert.equal(await page.evaluate(`document.querySelector('#debug-log')`), null);
-	});
-	await withApp(FAST, async (page) => {
-		await page.tap(band(0, 3));
-		await page.waitFor(`document.querySelector('#debug-log')?.textContent.includes('posé')`, 'toucher journalisé', 2000, `document.querySelector('#debug-log')?.textContent`);
-		assert.match(await text(page, '#debug-log'), /^Version \S+ \(.+\) · SW actif : (oui|non)/);
-	}, `${server.url}?debug`);
 });
 
 /* ================= Souris et touchers interrompus ================= */
@@ -244,11 +239,11 @@ test('souris (répétition sur ordinateur) : un clic arme la zone, un appui de 3
 });
 
 test('toucher interrompu par le système (appel, notification) : l’appui long n’ouvre pas les réglages', TEST_TIMEOUT, async () => {
-	await withApp({ delay: 10, fade: 0.5, showHoldTimer: true }, async (page) => {
+	await withApp({ delay: 10, fade: 0.5 }, async (page) => {
 		await page.touchStart(CENTER);
 		await sleep(1500);
 		await page.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
-		assert.equal(await text(page, '#hold-timer'), 'interrompu par le système');
+		assert.equal(await page.evaluate(`document.querySelector('#hold-ring').hidden`), true, 'jauge masquée');
 		await sleep(2500);
 		assert.equal(await page.evaluate(isSettingsOpen), false);
 	});
@@ -295,7 +290,7 @@ test('nouvelle version publiée pendant un tour : pas de rechargement, nombre to
 			assert.deepEqual(await page.evaluate(NUMBER), { text: '6', shown: true }, 'nombre toujours affiché');
 
 			await page.reload();
-			await page.waitFor(`document.querySelector('#version-badge').textContent.startsWith('v8888 ')`, 'nouvelle version à l\'ouverture suivante', 5000, `document.querySelector('#version-badge').textContent`);
+			await page.waitFor(`document.documentElement.dataset.version === '8888'`, 'nouvelle version à l\'ouverture suivante', 5000, `document.documentElement.dataset.version`);
 		}, site.url);
 	} finally {
 		await site.close();

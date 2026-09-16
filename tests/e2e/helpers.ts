@@ -32,7 +32,7 @@ export async function openApp(browser: Browser, url: string, stored: object | st
 		const raw = typeof stored === 'string' ? stored : JSON.stringify(stored);
 		await page.evaluate(`localStorage.clear(); ${stored === undefined ? '' : `localStorage.setItem('${STORAGE_KEY}', ${JSON.stringify(raw)})`}`);
 		await page.reload();
-		await page.waitFor(`document.querySelector('#version-badge').textContent`, 'démarrage de l\'app');
+		await page.waitFor(`document.documentElement.dataset.version`, 'démarrage de l\'app');
 		await run(page);
 		assert.deepEqual(page.errors, [], 'erreurs JavaScript dans la page');
 	} finally {
@@ -99,7 +99,7 @@ export async function waitForReload(page: Page, timeoutMs = 15_000): Promise<voi
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
 		try {
-			if (await page.evaluate<boolean>(`!window.__avant && Boolean(document.querySelector('#version-badge').textContent)`)) return;
+			if (await page.evaluate<boolean>(`!window.__avant && Boolean(document.documentElement.dataset.version)`)) return;
 		} catch {
 			// Page en cours de remplacement.
 		}

@@ -55,6 +55,11 @@ Quel numéro augmenter :
 
 ---
 
+## [Non publié]
+
+- **Options de la scène simplifiées** : le mode diagnostic `?debug`, l'affichage de la version sur la scène et la zone du menu en rouge sont supprimés, ainsi que le chrono d'appui. La version et le commit restent lisibles dans les réglages.
+- **Jauge de l'appui long**, reprise de l'Analyseur Q : un anneau se remplit sous le doigt jusqu'à l'ouverture des réglages. Il n'apparaît qu'après une demi-seconde (la durée d'un tap), donc jamais sur le toucher discret d'un tour, suit le doigt même téléphone tourné, et disparaît dès que le doigt glisse, se lève ou que le système interrompt le contact. C'est la seule aide à la répétition masquable qui reste, visible par défaut.
+
 ## [1.2.0] — 2026-09-16
 
 Commits [`513c25a`](https://github.com/dezande/boule-de-cristal/commit/513c25a), [`36b139d`](https://github.com/dezande/boule-de-cristal/commit/36b139d), [`3b5e76e`](https://github.com/dezande/boule-de-cristal/commit/3b5e76e) — 25 commits
