@@ -10,6 +10,7 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 
 | Version | Commits | Date | En une phrase |
 | --- | --- | --- | --- |
+| [1.4.0] | 30 | 2026-10-01 | Routines nommées à la place du nombre de zones et des valeurs |
 | [1.3.0] | 27 | 2026-09-16 | Jauge de l'appui long, aides de debug supprimées |
 | [1.2.0] | 25 | 2026-09-16 | Règles de branche du kit, kit v1.1.0, Node figé |
 | [1.1.0] | 21 | 2026-09-16 | Journal des versions, vérifié à chaque changement |
@@ -56,7 +57,9 @@ Quel numéro augmenter :
 
 ---
 
-## [Non publié]
+## [1.4.0] — 2026-10-01
+
+Commits [`fc0a0a4`](https://github.com/dezande/boule-de-cristal/commit/fc0a0a4), [`74bc77e`](https://github.com/dezande/boule-de-cristal/commit/74bc77e) — 30 commits
 
 Le nombre de zones et les valeurs ne se règlent plus : on choisit une routine par son nom.
 
@@ -220,6 +223,7 @@ Première version : une PWA mono-page, 100 % hors-ligne.
 - Le service worker met tout en cache pour le mode avion.
 
 
+[1.4.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.4.0
 [1.3.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.3.0
 [1.2.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.2.0
 [1.1.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.1.0
