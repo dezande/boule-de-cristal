@@ -14,7 +14,7 @@ Les réglages permettent de choisir la **routine**, le délai (0–10 s), la dur
 
 | Routine | Découpage | Valeurs |
 | --- | --- | --- |
-| **Dany Daortiz** (par défaut) | 3 bandes horizontales : haut, milieu, bas | **6 / 16 / 26** |
+| **3 boulettes** (par défaut) | 3 bandes horizontales : haut, milieu, bas | **6 / 16 / 26** |
 | **Arcane Système** | 4 coins : haut gauche, haut droite, bas gauche, bas droite | **17 / 19 / 21 / 23** |
 
 Les routines sont définies dans `src/logic/settings.ts` (`ROUTINES`). Une option, visible par défaut, montre la **jauge de l'appui long** : un anneau qui se remplit sous le doigt jusqu'à l'ouverture des réglages, pour s'entraîner au geste. Elle n'apparaît qu'après une demi-seconde, donc jamais sur le toucher discret d'un tour ; masquez-la quand même avant de jouer si le public voit l'écran. Les réglages affichent aussi l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.

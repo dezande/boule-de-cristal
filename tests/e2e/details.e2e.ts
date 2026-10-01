@@ -260,7 +260,7 @@ test('nouvelle version publiée pendant un tour : pas de rechargement, nombre to
 	cpSync('dist', dir, { recursive: true });
 	const site = await startStaticServer(dir, 0);
 	try {
-		await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
+		await withApp({ ...FAST, routine: 'trois-boulettes' }, async (page) => {
 			await page.waitFor(`navigator.serviceWorker.controller`, 'service worker actif', 15_000);
 			await page.tap(band(0, 3)); // tour en cours
 			await expectShown(page, '6');
