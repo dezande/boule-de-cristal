@@ -12,7 +12,7 @@ import { zoneIndexForPoint } from '../logic/zone-logic.ts';
 import { hideHoldRing, showHoldRing } from '../rehearsal/hold-ring.ts';
 import { flashZone } from '../rehearsal/test-mode.ts';
 import { openSettings } from '../settings/panel.ts';
-import { settings } from '../settings/store.ts';
+import { settings, zoneCount } from '../settings/store.ts';
 import { stage } from '../system/dom.ts';
 import { arm, fadeOut, isArmed, isLocked } from './ball.ts';
 
@@ -62,7 +62,7 @@ function press(id: PointerId, clientX: number, clientY: number, fingers: number)
 	if (action === 'reset') {
 		fadeOut();
 	} else if (action === 'arm') {
-		const index = zoneIndexForPoint(point.x, point.y, stage.clientWidth, stage.clientHeight, settings.zones);
+		const index = zoneIndexForPoint(point.x, point.y, stage.clientWidth, stage.clientHeight, zoneCount(settings));
 		if (index >= 0) {
 			arm(index);
 			flashZone(index);

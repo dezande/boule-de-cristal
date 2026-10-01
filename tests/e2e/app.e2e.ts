@@ -48,9 +48,9 @@ test('démarrage : tous les modules se chargent, sans erreur JavaScript', TEST_T
 });
 
 test('réglages abîmés : l’app démarre avec les réglages par défaut', TEST_TIMEOUT, async () => {
-	for (const stored of ['{pas du JSON', '"texte"', JSON.stringify({ zones: 9, values: 'x', delay: -5, fade: 'lent' })]) {
+	for (const stored of ['{pas du JSON', '"texte"', JSON.stringify({ routine: 'inconnue', zones: 9, values: 'x', delay: -5, fade: 'lent' })]) {
 		await withApp(stored, async (page) => {
-			// Par défaut : 3 bandes, 6 en haut.
+			// Par défaut : Dany Daortiz, 3 bandes, 6 en haut.
 			await page.tap(band(0, 3));
 			await expectShown(page, '6', 5000);
 		});
@@ -59,21 +59,19 @@ test('réglages abîmés : l’app démarre avec les réglages par défaut', TES
 
 /* ================= Zones ================= */
 
-test('2 et 3 bandes : chaque bande fait apparaître sa valeur', TEST_TIMEOUT, async () => {
-	for (const zones of [2, 3]) {
-		await withApp({ ...FAST, zones, values: ['6', '16', '26', '36'] }, async (page) => {
-			for (let i = 0; i < zones; i++) {
-				await page.tap(band(i, zones));
-				await expectShown(page, ['6', '16', '26'][i]);
-				await resetBall(page);
-			}
-		});
-	}
+test('Dany Daortiz : 3 bandes, chaque bande fait apparaître sa valeur (6, 16, 26)', TEST_TIMEOUT, async () => {
+	await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
+		for (let i = 0; i < 3; i++) {
+			await page.tap(band(i, 3));
+			await expectShown(page, ['6', '16', '26'][i]);
+			await resetBall(page);
+		}
+	});
 });
 
-test('4 coins : chaque coin fait apparaître sa valeur', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4, values: ['6', '16', '26', '36'] }, async (page) => {
-		for (const [point, value] of [[TOP_LEFT, '6'], [TOP_RIGHT, '16'], [BOTTOM_LEFT, '26'], [BOTTOM_RIGHT, '36']] as const) {
+test('Arcane Système : 4 coins, chaque coin fait apparaître sa valeur (17, 19, 21, 23)', TEST_TIMEOUT, async () => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
+		for (const [point, value] of [[TOP_LEFT, '17'], [TOP_RIGHT, '19'], [BOTTOM_LEFT, '21'], [BOTTOM_RIGHT, '23']] as const) {
 			await page.tap(point);
 			await expectShown(page, value);
 			await resetBall(page);
@@ -93,27 +91,27 @@ test('délai : le nombre n’apparaît qu’après le délai réglé', TEST_TIME
 });
 
 test('tour en cours : toucher une autre zone ne change pas le nombre', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4 }, async (page) => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		await page.tap(TOP_RIGHT);
-		await expectShown(page, '16');
+		await expectShown(page, '19');
 		// Au-delà du délai du double tap : un simple toucher.
 		await sleep(1000);
 		await page.tap(BOTTOM_LEFT);
 		await sleep(600);
-		assert.deepEqual(await page.evaluate(NUMBER), { text: '16', shown: true });
+		assert.deepEqual(await page.evaluate(NUMBER), { text: '19', shown: true });
 	});
 });
 
 test('double tap : efface le nombre, puis l’app se réarme', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4 }, async (page) => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		await page.tap(TOP_LEFT);
-		await expectShown(page, '6');
+		await expectShown(page, '17');
 		await sleep(1000);
 		await page.doubleTap(BOTTOM_RIGHT);
 		await expectCleared(page);
 		await sleep(FADE_OUT_MS);
 		await page.tap(BOTTOM_RIGHT);
-		await expectShown(page, '36');
+		await expectShown(page, '23');
 	});
 });
 
@@ -129,9 +127,9 @@ test('deux taps rapides pour armer : le nombre n’est pas effacé', TEST_TIMEOU
 /* ================= Appui long ================= */
 
 test('appui de 3 s : ouvre les réglages et efface la boule, même pendant un tour', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4 }, async (page) => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		await page.tap(TOP_RIGHT);
-		await expectShown(page, '16');
+		await expectShown(page, '19');
 		await sleep(1000);
 		await openSettings(page);
 		assert.equal((await page.evaluate<{ shown: boolean }>(NUMBER)).shown, false);
@@ -183,19 +181,36 @@ test('jauge de l’appui long : se remplit pendant l’appui, masquable dans les
 
 /* ================= Réglages ================= */
 
+/** Rappel des valeurs de la routine dans les réglages : [zone, valeur]. */
+const SHOWN_VALUES = `[...document.querySelectorAll('#routine-values .value-row')].map((row) => [row.querySelector('span').textContent, row.querySelector('b').textContent])`;
+const routineChecked = (id: string): string => `document.querySelector('[data-routine="${id}"]').getAttribute('aria-checked') === 'true'`;
+
+test('réglages : une routine par nom, avec son découpage et ses valeurs, sans saisie possible', TEST_TIMEOUT, async () => {
+	await withApp({ ...FAST }, async (page) => {
+		await openSettings(page);
+		assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('[data-routine]')].map((b) => b.textContent)`), ['Dany Daortiz', 'Arcane Système']);
+		assert.equal(await page.evaluate(routineChecked('dany-daortiz')), true);
+		assert.equal(await text(page, '#zones-hint'), '3 bandes horizontales');
+		assert.deepEqual(await page.evaluate(SHOWN_VALUES), [['Haut', '6'], ['Milieu', '16'], ['Bas', '26']]);
+		assert.equal(await page.evaluate(`document.querySelectorAll('#settings input[type="text"]').length`), 0, 'aucun champ de saisie des valeurs');
+
+		await click(page, '[data-routine="arcane-systeme"]');
+		assert.equal(await page.evaluate(routineChecked('arcane-systeme')), true);
+		assert.equal(await page.evaluate(routineChecked('dany-daortiz')), false);
+		assert.equal(await text(page, '#zones-hint'), '4 coins de l\'écran');
+		assert.deepEqual(await page.evaluate(SHOWN_VALUES), [['Haut gauche', '17'], ['Haut droite', '19'], ['Bas gauche', '21'], ['Bas droite', '23']]);
+
+		// Retour à Dany Daortiz : ses valeurs n'ont pas bougé.
+		await click(page, '[data-routine="dany-daortiz"]');
+		assert.deepEqual(await page.evaluate(SHOWN_VALUES), [['Haut', '6'], ['Milieu', '16'], ['Bas', '26']]);
+	});
+});
+
 test('réglages : chaque modification est appliquée, enregistrée et relue au redémarrage', TEST_TIMEOUT, async () => {
 	await withApp({ ...FAST }, async (page) => {
 		await openSettings(page);
 
-		await click(page, '[data-zones="4"]');
-		assert.equal(await text(page, '#zones-hint'), '4 coins de l\'écran');
-		assert.equal(await text(page, '#values-hint'), 'coin par coin');
-		assert.deepEqual(
-			await page.evaluate(`[...document.querySelectorAll('.value-row')].filter((row) => !row.hidden).map((row) => row.querySelector('label').textContent)`),
-			['Haut gauche', 'Haut droite', 'Bas gauche', 'Bas droite'],
-		);
-
-		await setField(page, '#v1', ' 42 ');
+		await click(page, '[data-routine="arcane-systeme"]');
 		await setField(page, '#delay', '1');
 		assert.equal(await text(page, '#delay-out'), '1 s');
 		await setField(page, '#brightness', '50');
@@ -205,8 +220,8 @@ test('réglages : chaque modification est appliquée, enregistrée et relue au r
 		await click(page, '#show-hold-ring');
 
 		const stored = await storedSettings(page);
-		assert.equal(stored.zones, 4);
-		assert.deepEqual(stored.values, ['6', '42', '26', '36']);
+		assert.equal(stored.routine, 'arcane-systeme');
+		assert.equal(stored.values, undefined, 'les valeurs ne sont pas enregistrées : elles viennent de la routine');
 		assert.equal(stored.delay, 1);
 		assert.equal(stored.brightness, 50);
 		assert.equal(stored.showHoldRing, false);
@@ -217,7 +232,7 @@ test('réglages : chaque modification est appliquée, enregistrée et relue au r
 		await page.reload();
 		await page.waitFor(`document.documentElement.dataset.version`, 'redémarrage');
 		await page.tap(TOP_RIGHT);
-		await expectShown(page, '42', 3000);
+		await expectShown(page, '19', 3000);
 
 		// L'option relue sur l'appareil : la jauge reste masquée pendant un appui.
 		await page.touchStart(CENTER);
@@ -227,20 +242,21 @@ test('réglages : chaque modification est appliquée, enregistrée et relue au r
 	});
 });
 
-test('réglages : valeur vidée conservée, réglages par défaut rétablis', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4, values: ['1', '2', '3', '4'] }, async (page) => {
-		await openSettings(page);
-		await page.evaluate(`document.querySelector('#v0').focus()`);
-		await setField(page, '#v0', '   ');
-		await page.evaluate(`document.querySelector('#v0').blur()`);
-		assert.equal(await page.evaluate(`document.querySelector('#v0').value`), '1');
-		assert.deepEqual((await storedSettings(page)).values, ['1', '2', '3', '4']);
+test('réglages d’une ancienne version (nombre de zones et valeurs) : ignorés, routine par défaut', TEST_TIMEOUT, async () => {
+	await withApp({ ...FAST, zones: 4, values: ['1', '1', '1', '1'] }, async (page) => {
+		await page.tap(band(0, 3));
+		await expectShown(page, '6');
+	});
+});
 
+test('réglages : réglages par défaut rétablis', TEST_TIMEOUT, async () => {
+	await withApp({ ...FAST, routine: 'arcane-systeme', brightness: 40 }, async (page) => {
+		await openSettings(page);
 		await click(page, '#defaults-btn');
 		const stored = await storedSettings(page);
-		assert.equal(stored.zones, 3);
-		assert.deepEqual(stored.values, ['6', '16', '26', '36']);
-		assert.equal(await page.evaluate(`document.querySelector('[data-zones="3"]').getAttribute('aria-checked')`), 'true');
+		assert.equal(stored.routine, 'dany-daortiz');
+		assert.equal(stored.brightness, 100);
+		assert.equal(await page.evaluate(routineChecked('dany-daortiz')), true);
 	});
 });
 
@@ -253,7 +269,7 @@ const DRAWN_ZONES = `[...document.querySelectorAll('#zones .zone')].map((zone) =
 })`;
 
 test('mode test : 4 coins dessinés, touchers signalés, retour aux réglages et sortie', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4 }, async (page) => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		await openSettings(page);
 		await click(page, '#test-btn');
 		assert.equal(await page.evaluate(isSettingsOpen), false);
@@ -261,10 +277,10 @@ test('mode test : 4 coins dessinés, touchers signalés, retour aux réglages et
 		const w = SCREEN.width / 2;
 		const h = SCREEN.height / 2;
 		assert.deepEqual(await page.evaluate(DRAWN_ZONES), [
-			{ left: 0, top: 0, width: w, height: h, right: false, label: 'Haut gauche →6' },
-			{ left: w, top: 0, width: w, height: h, right: true, label: 'Haut droite →16' },
-			{ left: 0, top: h, width: w, height: h, right: false, label: 'Bas gauche →26' },
-			{ left: w, top: h, width: w, height: h, right: true, label: 'Bas droite →36' },
+			{ left: 0, top: 0, width: w, height: h, right: false, label: 'Haut gauche →17' },
+			{ left: w, top: 0, width: w, height: h, right: true, label: 'Haut droite →19' },
+			{ left: 0, top: h, width: w, height: h, right: false, label: 'Bas gauche →21' },
+			{ left: w, top: h, width: w, height: h, right: true, label: 'Bas droite →23' },
 		]);
 
 		assert.equal(await text(page, '#test-state'), 'Prêt');
@@ -286,7 +302,7 @@ test('mode test : 4 coins dessinés, touchers signalés, retour aux réglages et
 });
 
 test('mode test : 3 bandes sur toute la largeur', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 3 }, async (page) => {
+	await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
 		await openSettings(page);
 		await click(page, '#test-btn');
 		const zones = await page.evaluate<{ left: number; width: number; right: boolean; label: string }[]>(DRAWN_ZONES);
@@ -306,7 +322,7 @@ test('téléphone en paysage : l’app pivote, la boule garde sa taille et les z
 	const W = SCREEN.height; // largeur de l'écran en paysage
 	const H = SCREEN.width;
 	const LANDSCAPE_CENTER: Point = { x: W / 2, y: H / 2 };
-	await withApp({ ...FAST, zones: 3 }, async (page) => {
+	await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
 		const ballSize = `Math.round(document.querySelector('.ball').offsetWidth)`;
 		const portraitBall = await page.evaluate<number>(ballSize);
 
@@ -373,7 +389,7 @@ test('nouvelle version publiée : nouveau cache, caches des autres apps intacts,
 	const dir = mkdtempSync(join(tmpdir(), 'boule-update-'));
 	cpSync('dist', dir, { recursive: true });
 	const site = await startStaticServer(dir, 0);
-	const stored = { ...FAST, zones: 4, values: ['1', '2', '3', '4'] };
+	const stored = { ...FAST, routine: 'arcane-systeme', brightness: 60 };
 	try {
 		await withApp(stored, async (page) => {
 			await page.waitFor(`navigator.serviceWorker.controller`, 'service worker actif', 15_000);
@@ -393,7 +409,7 @@ test('nouvelle version publiée : nouveau cache, caches des autres apps intacts,
 			assert.deepEqual((await page.evaluate<string[]>(`caches.keys()`)).sort(), ['analyseur-q-autre-app', newCache].sort());
 			assert.deepEqual(await storedSettings(page), { ...(await storedSettings(page)), ...stored }, 'réglages conservés');
 			await page.tap(BOTTOM_RIGHT);
-			await expectShown(page, '4');
+			await expectShown(page, '23');
 		}, site.url);
 	} finally {
 		await site.close();
@@ -409,7 +425,7 @@ test('hors-ligne : tous les fichiers sont en cache et l’app fonctionne serveur
 	const page = await browser.newPage();
 	try {
 		await page.goto(offlineServer.url);
-		await page.evaluate(`localStorage.setItem('${STORAGE_KEY}', ${JSON.stringify(JSON.stringify({ ...FAST, zones: 4 }))})`);
+		await page.evaluate(`localStorage.setItem('${STORAGE_KEY}', ${JSON.stringify(JSON.stringify({ ...FAST, routine: 'arcane-systeme' }))})`);
 		await page.waitFor(`navigator.serviceWorker.controller`, 'service worker actif', 15_000);
 
 		// Chaque fichier listé par le service worker est bien en cache.
@@ -429,7 +445,7 @@ test('hors-ligne : tous les fichiers sont en cache et l’app fonctionne serveur
 		await page.reload();
 		await page.waitFor(`document.documentElement.dataset.version`, 'redémarrage serveur arrêté');
 		await page.tap(BOTTOM_LEFT);
-		await expectShown(page, '26');
+		await expectShown(page, '21');
 		assert.deepEqual(page.errors, [], 'erreurs JavaScript dans la page');
 	} finally {
 		await page.close();

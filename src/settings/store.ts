@@ -1,14 +1,14 @@
 /* Réglages en cours et enregistrement sur l'appareil (localStorage). Validation : logic/settings.ts. */
 
-import { sanitizeSettings, type Settings, type ZoneCount } from '../logic/settings.ts';
+import { routineValues, sanitizeSettings, zoneCount, type RoutineId, type Settings, type ZoneCount } from '../logic/settings.ts';
 
-export type { Settings, ZoneCount };
+export type { RoutineId, Settings, ZoneCount };
+export { routineValues, zoneCount };
 
 const STORAGE_KEY = 'voyante:settings:v1';
 
 /** Nom de chaque zone, dans l'ordre des zones (voir logic/zone-logic.ts). */
 export const ZONE_NAMES: Record<ZoneCount, readonly string[]> = {
-	2: ['Haut', 'Bas'],
 	3: ['Haut', 'Milieu', 'Bas'],
 	4: ['Haut gauche', 'Haut droite', 'Bas gauche', 'Bas droite'],
 };

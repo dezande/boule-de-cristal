@@ -4,9 +4,9 @@
 // Lancer : npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULTS, MAX_VALUE_LENGTH, sanitizeSettings } from '../../src/logic/settings.ts';
+import { DEFAULTS, ROUTINE_IDS, ROUTINES, routineValues, sanitizeSettings, zoneCount } from '../../src/logic/settings.ts';
 
-const defaults = { ...DEFAULTS, values: [...DEFAULTS.values] };
+const defaults = { ...DEFAULTS };
 
 /* ---------- Données absentes ou illisibles ---------- */
 
@@ -17,15 +17,19 @@ test('rien d’enregistré, ou pas un objet : réglages par défaut', () => {
 });
 
 test('réglages valides conservés tels quels', () => {
-	const valid = { zones: 4, values: ['1', '22', '333', '4444'], delay: 2.5, fade: 0.8, brightness: 45, showHoldRing: false };
+	const valid = { routine: 'arcane-systeme', delay: 2.5, fade: 0.8, brightness: 45, showHoldRing: false };
 	assert.deepEqual(sanitizeSettings(valid), valid);
 });
 
 test('ancienne version sans l’option d’affichage : la jauge est visible par défaut', () => {
-	const old = sanitizeSettings({ zones: 2, values: ['7', '8'], delay: 1, fade: 2, brightness: 80 });
-	assert.equal(old.zones, 2);
-	assert.deepEqual(old.values, ['7', '8', '26', '36']);
+	const old = sanitizeSettings({ routine: 'arcane-systeme', delay: 1, fade: 2, brightness: 80 });
+	assert.equal(old.routine, 'arcane-systeme');
 	assert.equal(old.showHoldRing, true);
+});
+
+test('ancienne version avec nombre de zones et valeurs : ignorés, routine par défaut, autres réglages conservés', () => {
+	const old = sanitizeSettings({ zones: 4, values: ['1', '1', '1', '1'], delay: 1, fade: 2, brightness: 80, showHoldRing: false });
+	assert.deepEqual(old, { routine: DEFAULTS.routine, delay: 1, fade: 2, brightness: 80, showHoldRing: false });
 });
 
 test('options supprimées d’une ancienne version : ignorées', () => {
@@ -34,27 +38,29 @@ test('options supprimées d’une ancienne version : ignorées', () => {
 	assert.equal(old.showHoldRing, true);
 });
 
-/* ---------- Nombre de zones ---------- */
+/* ---------- Routines ---------- */
 
-test('nombre de zones : seulement 2, 3 ou 4', () => {
-	for (const zones of [2, 3, 4] as const) assert.equal(sanitizeSettings({ zones }).zones, zones);
-	for (const zones of [0, 1, 5, 2.5, '4', null, NaN]) assert.equal(sanitizeSettings({ zones }).zones, DEFAULTS.zones, String(zones));
+test('routines : Dany Daortiz en 3 bandes (6, 16, 26), Arcane Système en 4 coins (17, 19, 21, 23)', () => {
+	const dany = sanitizeSettings({ routine: 'dany-daortiz' });
+	assert.equal(zoneCount(dany), 3);
+	assert.deepEqual(routineValues(dany), ['6', '16', '26']);
+	const arcane = sanitizeSettings({ routine: 'arcane-systeme' });
+	assert.equal(zoneCount(arcane), 4);
+	assert.deepEqual(routineValues(arcane), ['17', '19', '21', '23']);
 });
 
-/* ---------- Valeurs ---------- */
-
-test('valeurs : espaces retirés, longueur limitée, nombres acceptés', () => {
-	const { values } = sanitizeSettings({ values: ['  12 ', '1234567890', 99, ''] });
-	assert.deepEqual(values, ['12', '1234567890'.slice(0, MAX_VALUE_LENGTH), '99', DEFAULTS.values[3]]);
+test('chaque routine a exactement une valeur par zone', () => {
+	for (const id of ROUTINE_IDS) assert.equal(ROUTINES[id].values.length, ROUTINES[id].zones, id);
 });
 
-test('valeurs vides, manquantes ou d’un mauvais type : valeur par défaut de la zone', () => {
-	assert.deepEqual(sanitizeSettings({ values: ['   ', null, { v: 1 }] }).values, defaults.values);
-	assert.deepEqual(sanitizeSettings({ values: '6,16,26' }).values, defaults.values);
+test('routine par défaut : Dany Daortiz', () => {
+	assert.equal(DEFAULTS.routine, 'dany-daortiz');
 });
 
-test('toujours 4 valeurs : les valeurs en trop sont ignorées', () => {
-	assert.deepEqual(sanitizeSettings({ values: ['1', '2', '3', '4', '5', '6'] }).values, ['1', '2', '3', '4']);
+test('routine inconnue ou d’un mauvais type : routine par défaut', () => {
+	for (const routine of ['', 'arcane', 'toString', '__proto__', 3, null, {}]) {
+		assert.equal(sanitizeSettings({ routine }).routine, DEFAULTS.routine, String(routine));
+	}
 });
 
 /* ---------- Curseurs ---------- */
@@ -91,7 +97,7 @@ test('jauge de l’appui long : seulement de vrais booléens', () => {
 /* ---------- Propriétés générales ---------- */
 
 test('valider deux fois ne change rien', () => {
-	for (const raw of [null, { zones: 9, values: [' 5 ', 12], delay: 3.3, fade: 'x', brightness: 12 }, { zones: 4, delay: 11 }]) {
+	for (const raw of [null, { routine: 'x', delay: 3.3, fade: 'x', brightness: 12 }, { routine: 'arcane-systeme', delay: 11 }]) {
 		const once = sanitizeSettings(raw);
 		assert.deepEqual(sanitizeSettings(once), once);
 	}
@@ -99,12 +105,12 @@ test('valider deux fois ne change rien', () => {
 
 test('les réglages renvoyés sont une copie : les modifier ne touche pas aux valeurs par défaut', () => {
 	const s = sanitizeSettings(null);
-	s.values[0] = '999';
+	s.routine = 'arcane-systeme';
 	s.delay = 9;
-	assert.equal(DEFAULTS.values[0], '6');
+	assert.equal(DEFAULTS.routine, 'dany-daortiz');
 	assert.deepEqual(sanitizeSettings(null), defaults);
 });
 
 test('champs inconnus ignorés', () => {
-	assert.deepEqual(Object.keys(sanitizeSettings({ extra: 1, zones: 2 })).sort(), Object.keys(DEFAULTS).sort());
+	assert.deepEqual(Object.keys(sanitizeSettings({ extra: 1, zones: 2, values: ['1'] })).sort(), Object.keys(DEFAULTS).sort());
 });
