@@ -12,7 +12,7 @@ import { Browser, SCREEN, type Page, type Point } from '../../src/kit/node/chrom
 import { startStaticServer, type StaticServer } from '../../src/kit/node/static-server.ts';
 import {
 	band, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER, click, expectCleared, expectShown, FADE_OUT_MS, FAST, isSettingsOpen, NUMBER,
-	openApp, openSettings, resetBall, setField, storedSettings, TEST_TIMEOUT, text, TOP_LEFT, TOP_RIGHT, turnPhone,
+	openApp, openSettings, resetBall, setField, TEST_TIMEOUT, text, TOP_LEFT, TOP_RIGHT, turnPhone,
 } from './helpers.ts';
 
 let server: StaticServer;
@@ -67,9 +67,9 @@ test('fondu : l’app reste verrouillée pendant toute la durée du fondu régl�
 	});
 });
 
-test('taille du nombre : plus il a de chiffres, plus il est petit, sans jamais sortir de la boule', TEST_TIMEOUT, async () => {
-	const cases: [Point, string, string][] = [[TOP_LEFT, '7', '0.42'], [TOP_RIGHT, '123', '0.32'], [BOTTOM_LEFT, '1234', '0.25'], [BOTTOM_RIGHT, '123456', '0.2']];
-	await withApp({ ...FAST, zones: 4, values: cases.map(([, value]) => value) }, async (page) => {
+test('taille du nombre : chaque valeur des routines tient dans la boule', TEST_TIMEOUT, async () => {
+	const cases: [Point, string, string][] = [[TOP_LEFT, '17', '0.42'], [TOP_RIGHT, '19', '0.42'], [BOTTOM_LEFT, '21', '0.42'], [BOTTOM_RIGHT, '23', '0.42']];
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		for (const [point, value, scale] of cases) {
 			await page.tap(point);
 			await expectShown(page, value);
@@ -108,12 +108,12 @@ test('téléphone tourné : les 4 coins suivent le téléphone, dans les deux se
 		// Haut de l'app à droite de l'écran, gauche de l'app en haut.
 		270: [{ x: W - 60, y: 60 }, { x: W - 60, y: H - 60 }, { x: 60, y: 60 }, { x: 60, y: H - 60 }],
 	};
-	await withApp({ ...FAST, zones: 4 }, async (page) => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		for (const angle of [90, 270] as const) {
 			await turnPhone(page, angle);
 			for (const [i, point] of corners[angle].entries()) {
 				await page.tap(point);
-				await expectShown(page, ['6', '16', '26', '36'][i]);
+				await expectShown(page, ['17', '19', '21', '23'][i]);
 				await resetBall(page, center);
 			}
 		}
@@ -122,7 +122,7 @@ test('téléphone tourné : les 4 coins suivent le téléphone, dans les deux se
 });
 
 test('téléphone tourné : le mode test dessine les zones dans l’axe du téléphone et signale le bon coin', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, zones: 4 }, async (page) => {
+	await withApp({ ...FAST, routine: 'arcane-systeme' }, async (page) => {
 		await openSettings(page);
 		await click(page, '#test-btn');
 		await turnPhone(page, 90);
@@ -145,7 +145,7 @@ test('téléphone tourné : le mode test dessine les zones dans l’axe du tél�
 
 /* ================= Réglages ================= */
 
-test('réglages : libellés des curseurs, fondu et luminosité appliqués, valeur limitée à 6 caractères, Entrée ferme le clavier', TEST_TIMEOUT, async () => {
+test('réglages : libellés des curseurs, fondu et luminosité appliqués', TEST_TIMEOUT, async () => {
 	await withApp(FAST, async (page) => {
 		await openSettings(page);
 		await setField(page, '#delay', '0');
@@ -158,16 +158,6 @@ test('réglages : libellés des curseurs, fondu et luminosité appliqués, valeu
 		await setField(page, '#brightness', '30');
 		assert.equal(await text(page, '#brightness-out'), '30 %');
 		assert.equal(await page.evaluate(`document.documentElement.style.getPropertyValue('--dim')`), '0.7');
-
-		assert.equal(await page.evaluate(`document.querySelector('#v0').maxLength`), 6);
-		await setField(page, '#v0', '1234567890');
-		assert.equal(((await storedSettings(page)).values as string[])[0], '123456');
-
-		await page.evaluate(`document.querySelector('#v1').focus()`);
-		assert.equal(await page.evaluate(`document.activeElement.id`), 'v1');
-		await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
-		await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
-		assert.notEqual(await page.evaluate(`document.activeElement.id`), 'v1', 'Entrée quitte le champ');
 	});
 });
 
@@ -270,7 +260,7 @@ test('nouvelle version publiée pendant un tour : pas de rechargement, nombre to
 	cpSync('dist', dir, { recursive: true });
 	const site = await startStaticServer(dir, 0);
 	try {
-		await withApp({ ...FAST, zones: 3 }, async (page) => {
+		await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
 			await page.waitFor(`navigator.serviceWorker.controller`, 'service worker actif', 15_000);
 			await page.tap(band(0, 3)); // tour en cours
 			await expectShown(page, '6');

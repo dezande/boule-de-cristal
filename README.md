@@ -6,11 +6,18 @@ Accessoire de scène : une PWA mono-page, 100 % hors-ligne, qui fait apparaître
 
 | Geste | Effet |
 | --- | --- |
-| Toucher le tiers **haut / central / bas** de l'écran | Arme **6 / 16 / 26**. Le nombre apparaît après le délai, puis l'écran se verrouille |
+| Toucher une zone de l'écran (voir les routines ci-dessous) | Arme la valeur de cette zone. Le nombre apparaît après le délai, puis l'écran se verrouille |
 | **Double tap n'importe où**, quand un nombre est armé ou affiché | Le nombre s'estompe, l'app se réarme |
 | **Appui de 3 s n'importe où** sur l'écran | Ouvre les réglages (et efface le nombre) |
 
-Les réglages permettent de changer le nombre de zones, les valeurs, le délai (0–10 s), la durée du fondu et la luminosité. Avec 2 ou 3 zones, l'écran est coupé en bandes horizontales ; avec 4 zones, en 4 coins (haut gauche, haut droite, bas gauche, bas droite). Une option, visible par défaut, montre la **jauge de l'appui long** : un anneau qui se remplit sous le doigt jusqu'à l'ouverture des réglages, pour s'entraîner au geste. Elle n'apparaît qu'après une demi-seconde, donc jamais sur le toucher discret d'un tour ; masquez-la quand même avant de jouer si le public voit l'écran. Les réglages affichent aussi l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
+Les réglages permettent de choisir la **routine**, le délai (0–10 s), la durée du fondu et la luminosité. Chaque routine fixe le découpage de l'écran et ses valeurs, qui ne se modifient pas dans l'app :
+
+| Routine | Découpage | Valeurs |
+| --- | --- | --- |
+| **Dany Daortiz** (par défaut) | 3 bandes horizontales : haut, milieu, bas | **6 / 16 / 26** |
+| **Arcane Système** | 4 coins : haut gauche, haut droite, bas gauche, bas droite | **17 / 19 / 21 / 23** |
+
+Les routines sont définies dans `src/logic/settings.ts` (`ROUTINES`). Une option, visible par défaut, montre la **jauge de l'appui long** : un anneau qui se remplit sous le doigt jusqu'à l'ouverture des réglages, pour s'entraîner au geste. Elle n'apparaît qu'après une demi-seconde, donc jamais sur le toucher discret d'un tour ; masquez-la quand même avant de jouer si le public voit l'écran. Les réglages affichent aussi l'état du maintien de l'écran allumé, le numéro de version (nombre de commits), le commit, le cache hors-ligne en service et le mode d'affichage (app installée ou navigateur). Le bouton **Test des zones** montre les limites des zones pour répéter.
 
 ## Installation
 
@@ -65,10 +72,10 @@ npm run build       # génère dist/
 
 ### Tests
 
-- **Tests unitaires** (`tests/logic/`, `npm test`) : la logique pure de `src/logic/`, sous Node. Zone touchée (bandes ou coins), décision de chaque geste (armer, effacer, ouvrir les réglages, annuler), validation des réglages relus sur l'appareil.
+- **Tests unitaires** (`tests/logic/`, `npm test`) : la logique pure de `src/logic/`, sous Node. Zone touchée (bandes ou coins), décision de chaque geste (armer, effacer, ouvrir les réglages, annuler), routines et validation des réglages relus sur l'appareil.
 - **Tests dans Chrome** (`tests/e2e/`, `npm run test:e2e`) : l'app compilée dans Chrome sans interface, sur un écran de téléphone simulé, avec de vrais événements tactiles. Il faut Google Chrome, trouvé automatiquement (sinon, indiquez son chemin dans `CHROME_PATH`). Outils communs dans `helpers.ts`.
-  - `app.e2e.ts`, le tour de base : chaque zone, double tap, appui de 3 s (et ses annulations), jauge de l'appui long, délai, réglages enregistrés et relus, réglages abîmés, mode test, téléphone tourné (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté.
-  - `details.e2e.ts`, les cas limites : double tap pendant le délai, verrouillage pendant tout le fondu, taille du nombre selon ses chiffres, appui de 3 s pendant le délai, 4 coins et mode test téléphone tourné, libellés des curseurs, fondu et luminosité, valeur limitée à 6 caractères, Entrée dans un champ, informations sur l'app, barre d'état du mode test, jauge de l'appui long (posée au point touché, abandonnée si le doigt glisse), souris, toucher interrompu par le système, menu contextuel, zoom et défilement bloqués, nouvelle version publiée pendant un tour (pas de rechargement).
+  - `app.e2e.ts`, le tour de base : chaque zone, double tap, appui de 3 s (et ses annulations), jauge de l'appui long, délai, choix de la routine, réglages enregistrés et relus, réglages abîmés ou d'une ancienne version, mode test, téléphone tourné (app pivotée, boule de la même taille, zones et défilement des réglages dans l'axe du téléphone), écran allumé (verrou et vidéo), nouvelle version publiée (nouveau cache, cache d'une autre app intact, réglages conservés, rechargement automatique), fonctionnement serveur arrêté.
+  - `details.e2e.ts`, les cas limites : double tap pendant le délai, verrouillage pendant tout le fondu, taille du nombre dans la boule, appui de 3 s pendant le délai, 4 coins et mode test téléphone tourné, libellés des curseurs, fondu et luminosité, informations sur l'app, barre d'état du mode test, jauge de l'appui long (posée au point touché, abandonnée si le doigt glisse), souris, toucher interrompu par le système, menu contextuel, zoom et défilement bloqués, nouvelle version publiée pendant un tour (pas de rechargement).
 
 Restent à vérifier sur un vrai téléphone : l'écran toujours allumé, le ressenti des gestes et l'installation sur l'écran d'accueil.
 
@@ -83,7 +90,7 @@ La liste des fichiers mis en cache hors-ligne est calculée au build : un nouvea
 | `src/rehearsal/` | Aides à la répétition : test des zones (`test-mode.ts`), jauge de l'appui long (`hold-ring.ts`) |
 | `src/system/` | Accès au DOM et scène |
 | `src/kit/` | Kit commun [kit-scene](https://github.com/dezande/kit-scene) (sous-module) : écran allumé, portrait, service worker et mises à jour, version, styles `#app`, outils de build, déploiement et pilote de Chrome |
-| `src/logic/` | Logique pure testée sous Node : zone touchée (bandes ou 4 coins), gestes, validation des réglages |
+| `src/logic/` | Logique pure testée sous Node : zone touchée (bandes ou 4 coins), gestes, routines et validation des réglages |
 | `src/sw/` | Compilation du service worker du kit (`src/kit/sw/sw.ts`) |
 | `src/styles/` | Styles Sass, compilés en `dist/style.css` |
 | `tests/logic/` | Tests unitaires de `src/logic/` (`npm test`) |

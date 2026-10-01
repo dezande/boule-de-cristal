@@ -5,13 +5,33 @@
  * tout passe par sanitizeSettings() avant d'être utilisé.
  */
 
-export type ZoneCount = 2 | 3 | 4;
+/** 3 : bandes horizontales ; 4 : les 4 coins. */
+export type ZoneCount = 3 | 4;
+
+export type RoutineId = 'dany-daortiz' | 'arcane-systeme';
+
+export interface Routine {
+	/** Nom affiché dans les réglages. */
+	name: string;
+	zones: ZoneCount;
+	/** Une valeur par zone, dans l'ordre des zones. */
+	values: readonly string[];
+}
+
+/**
+ * Routines jouables, chacune avec son découpage de l'écran et ses valeurs.
+ * Elles sont fixées ici : les réglages ne font que choisir la routine.
+ */
+export const ROUTINES: Readonly<Record<RoutineId, Routine>> = Object.freeze({
+	'dany-daortiz': { name: 'Dany Daortiz', zones: 3, values: ['6', '16', '26'] },
+	'arcane-systeme': { name: 'Arcane Système', zones: 4, values: ['17', '19', '21', '23'] },
+});
+
+export const ROUTINE_IDS = Object.keys(ROUTINES) as RoutineId[];
 
 export interface Settings {
-	/** 2 ou 3 : bandes horizontales ; 4 : les 4 coins. */
-	zones: ZoneCount;
-	/** Une valeur par zone, dans l'ordre des zones (toujours 4 : les dernières sont ignorées avec moins de zones). */
-	values: string[];
+	/** Routine jouée : elle fixe le découpage de l'écran et les valeurs. */
+	routine: RoutineId;
 	/** Délai entre le toucher et l'apparition du nombre, en secondes. */
 	delay: number;
 	/** Durée du fondu d'apparition et de disparition, en secondes. */
@@ -22,12 +42,8 @@ export interface Settings {
 	showHoldRing: boolean;
 }
 
-/** Longueur maximale d'une valeur (le champ de saisie a le même maxlength). */
-export const MAX_VALUE_LENGTH = 6;
-
 export const DEFAULTS: Readonly<Settings> = Object.freeze({
-	zones: 3,
-	values: ['6', '16', '26', '36'],
+	routine: 'dany-daortiz',
 	delay: 3,
 	fade: 1.5,
 	brightness: 100,
@@ -39,7 +55,12 @@ const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.m
 const num = (v: unknown, fallback: number, lo: number, hi: number): number =>
 	typeof v === 'number' && Number.isFinite(v) ? clamp(v, lo, hi) : fallback;
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === 'boolean' ? v : fallback);
-const isZoneCount = (v: unknown): v is ZoneCount => v === 2 || v === 3 || v === 4;
+const isRoutineId = (v: unknown): v is RoutineId => typeof v === 'string' && Object.hasOwn(ROUTINES, v);
+
+/** Nombre de zones de la routine jouée. */
+export const zoneCount = (s: Settings): ZoneCount => ROUTINES[s.routine].zones;
+/** Valeurs de la routine jouée, une par zone. */
+export const routineValues = (s: Settings): readonly string[] => ROUTINES[s.routine].values;
 
 /**
  * Réglages valides à partir de n'importe quelle donnée (JSON enregistré, réglages en cours…) :
@@ -48,14 +69,9 @@ const isZoneCount = (v: unknown): v is ZoneCount => v === 2 || v === 3 || v === 
  */
 export function sanitizeSettings(raw: unknown): Settings {
 	const src: Partial<Record<keyof Settings, unknown>> = raw && typeof raw === 'object' ? raw : {};
-	const values = DEFAULTS.values.map((fallback, i) => {
-		const v: unknown = Array.isArray(src.values) ? src.values[i] : undefined;
-		const s = typeof v === 'string' || typeof v === 'number' ? String(v).trim().slice(0, MAX_VALUE_LENGTH) : '';
-		return s || fallback;
-	});
+	// Les anciennes versions enregistraient un nombre de zones et des valeurs : ils sont ignorés.
 	return {
-		zones: isZoneCount(src.zones) ? src.zones : DEFAULTS.zones,
-		values,
+		routine: isRoutineId(src.routine) ? src.routine : DEFAULTS.routine,
 		delay: Math.round(num(src.delay, DEFAULTS.delay, 0, 10) * 2) / 2,
 		fade: Math.round(num(src.fade, DEFAULTS.fade, 0.5, 6) * 10) / 10,
 		brightness: Math.round(num(src.brightness, DEFAULTS.brightness, 30, 100)),

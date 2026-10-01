@@ -7,7 +7,7 @@
  * .stirring et .revealed sur l'autel, .shown sur le nombre.
  */
 
-import { settings } from '../settings/store.ts';
+import { routineValues, settings } from '../settings/store.ts';
 import { $ } from '../system/dom.ts';
 
 export type Phase = 'idle' | 'pending' | 'shown' | 'clearing';
@@ -50,7 +50,7 @@ function setMistTiming(seconds: number): void {
 
 /** Arme la valeur d'une zone : la brume s'agite, le nombre apparaîtra après le délai. */
 export function arm(zoneIndex: number): void {
-	const value = settings.values[zoneIndex];
+	const value = routineValues(settings)[zoneIndex];
 	numberText.textContent = value;
 	numberEl.style.setProperty('--num-k', String(numberScale(value)));
 	// Montée lente (ease-in) : rien de perceptible à l'instant du toucher.

@@ -94,10 +94,10 @@ output {
 	font-variant-numeric: tabular-nums;
 }
 
-// Choix du nombre de zones.
+// Choix de la routine.
 .seg {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(2, 1fr);
 	gap: 6px;
 	padding: 4px;
 	border-radius: 12px;
@@ -106,7 +106,7 @@ output {
 	.sheet & button {
 		border-color: transparent;
 		background: transparent;
-		font: 400 22px/1 $serif;
+		font: 400 19px/1.1 $serif;
 		min-height: 42px;
 
 		&[aria-checked="true"] {
@@ -119,34 +119,22 @@ output {
 
 .values {
 	display: grid;
-	gap: 8px;
+	gap: 6px;
+	margin-top: 12px;
 }
 
+// Rappel des valeurs de la routine : zone, puis valeur.
 .value-row {
-	display: grid;
-	grid-template-columns: 1fr 112px;
-	align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
 	gap: 12px;
+	font-size: 15px;
+	color: rgba(240, 232, 255, .8);
 
-	label {
-		font-size: 15px;
-		color: rgba(240, 232, 255, .8);
-	}
-
-	input {
-		width: 100%;
-		padding: 9px 8px;
-		border-radius: 10px;
-		border: 1px solid rgba(243, 226, 176, .22);
-		background: rgba(0, 0, 0, .35);
+	b {
 		color: $gold-bright;
-		font: 400 24px/1 $serif;
-		text-align: center;
-		outline: none;
-
-		&:focus {
-			border-color: rgba(243, 226, 176, .6);
-		}
+		font: 400 22px/1 $serif;
 	}
 }
 

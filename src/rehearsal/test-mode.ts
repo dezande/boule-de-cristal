@@ -4,7 +4,7 @@
  */
 
 import { zoneRects } from '../logic/zone-logic.ts';
-import { settings, ZONE_NAMES } from '../settings/store.ts';
+import { routineValues, settings, ZONE_NAMES, zoneCount } from '../settings/store.ts';
 import { onPhaseChange, type Phase } from '../stage/ball.ts';
 import { $, stage } from '../system/dom.ts';
 
@@ -45,7 +45,8 @@ function tag(label: string, value: string): HTMLSpanElement {
 function renderZones(): void {
 	zonesEl.textContent = '';
 	// Repère de la scène (pivotée ou non) : #zones est dans #app, comme la scène.
-	for (const r of zoneRects(stage.clientWidth, stage.clientHeight, settings.zones)) {
+	const zones = zoneCount(settings);
+	for (const r of zoneRects(stage.clientWidth, stage.clientHeight, zones)) {
 		const zone = document.createElement('div');
 		zone.className = 'zone';
 		// Colonne de droite des 4 coins : trait vertical et étiquette à droite.
@@ -54,7 +55,7 @@ function renderZones(): void {
 		zone.style.top = `${r.top}px`;
 		zone.style.width = `${r.right - r.left}px`;
 		zone.style.height = `${r.bottom - r.top}px`;
-		zone.append(tag(`${ZONE_NAMES[settings.zones][r.index]} →`, settings.values[r.index]));
+		zone.append(tag(`${ZONE_NAMES[zones][r.index]} →`, routineValues(settings)[r.index]));
 		zonesEl.append(zone);
 	}
 }

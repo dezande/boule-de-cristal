@@ -5,12 +5,12 @@
 
 import { BUILD } from '../kit/web/build.ts';
 import { describeWake, keepScreenAwake, onWakeChange } from '../kit/web/wake-lock.ts';
-import { MAX_VALUE_LENGTH } from '../logic/settings.ts';
+import { ROUTINE_IDS, ROUTINES } from '../logic/settings.ts';
 import { hideHoldRing } from '../rehearsal/hold-ring.ts';
 import { setTestMode } from '../rehearsal/test-mode.ts';
 import { hardReset } from '../stage/ball.ts';
 import { $ } from '../system/dom.ts';
-import { settings, storeSettings, ZONE_NAMES, type ZoneCount } from './store.ts';
+import { routineValues, settings, storeSettings, ZONE_NAMES, zoneCount, type RoutineId } from './store.ts';
 
 const settingsEl = $('#settings');
 const sheet = $('.sheet', settingsEl);
@@ -28,15 +28,22 @@ const fmt = (n: number): string => n.toLocaleString('fr-FR', { maximumFractionDi
 
 /* ---------- Champs ---------- */
 
+// Un bouton par routine, dans l'ordre de ROUTINES.
+$('#routines').append(...ROUTINE_IDS.map((id) => {
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.setAttribute('role', 'radio');
+	button.dataset.routine = id;
+	button.textContent = ROUTINES[id].name;
+	return button;
+}));
+
 const form = {
-	/** Boutons 2 / 3 / 4 zones. */
-	seg: settingsEl.querySelectorAll<HTMLButtonElement>('[data-zones]'),
-	/** Lignes des valeurs (une par zone, 4 au maximum). */
-	rows: settingsEl.querySelectorAll<HTMLElement>('.value-row'),
-	labels: settingsEl.querySelectorAll<HTMLLabelElement>('.value-row label'),
-	inputs: settingsEl.querySelectorAll<HTMLInputElement>('.value-row input'),
+	/** Boutons des routines. */
+	seg: settingsEl.querySelectorAll<HTMLButtonElement>('[data-routine]'),
 	zonesHint: $('#zones-hint'),
-	valuesHint: $('#values-hint'),
+	/** Rappel des valeurs de la routine, zone par zone (lecture seule). */
+	values: $('#routine-values'),
 };
 
 /** Curseurs : réglage piloté et texte affiché à côté. */
@@ -64,20 +71,21 @@ export function applySettings(): void {
 
 /** Remplit le panneau avec les réglages en cours. */
 function renderForm(): void {
-	const corners = settings.zones === 4;
-	form.seg.forEach((button) => button.setAttribute('aria-checked', String(Number(button.dataset.zones) === settings.zones)));
-	form.zonesHint.textContent = corners ? '4 coins de l\'écran' : 'bandes horizontales';
-	form.valuesHint.textContent = corners ? 'coin par coin' : 'de haut en bas';
-	form.rows.forEach((row, i) => {
-		row.hidden = i >= settings.zones;
-	});
-	form.labels.forEach((label, i) => {
-		label.textContent = ZONE_NAMES[settings.zones][i] ?? '';
-	});
-	form.inputs.forEach((input, i) => {
-		// Ne pas réécrire le champ en cours de saisie : le curseur sauterait.
-		if (document.activeElement !== input) input.value = settings.values[i];
-	});
+	const zones = zoneCount(settings);
+	const corners = zones === 4;
+	const values = routineValues(settings);
+	form.seg.forEach((button) => button.setAttribute('aria-checked', String(button.dataset.routine === settings.routine)));
+	form.zonesHint.textContent = corners ? '4 coins de l\'écran' : '3 bandes horizontales';
+	form.values.replaceChildren(...values.map((value, i) => {
+		const row = document.createElement('div');
+		row.className = 'value-row';
+		const name = document.createElement('span');
+		name.textContent = ZONE_NAMES[zones][i] ?? '';
+		const b = document.createElement('b');
+		b.textContent = value;
+		row.append(name, b);
+		return row;
+	}));
 	for (const { key, input, output, label } of SLIDERS) {
 		input.value = String(settings[key]);
 		output.textContent = label(settings[key]);
@@ -118,25 +126,9 @@ function commit(next: unknown = settings): void {
 /* ---------- Modifications ---------- */
 
 form.seg.forEach((button) => button.addEventListener('click', () => {
-	settings.zones = Number(button.dataset.zones) as ZoneCount;
+	settings.routine = button.dataset.routine as RoutineId;
 	commit();
 }));
-
-form.inputs.forEach((input, i) => {
-	input.addEventListener('input', () => {
-		const v = input.value.trim().slice(0, MAX_VALUE_LENGTH);
-		// Champ vidé : on garde l'ancienne valeur, restaurée à la sortie du champ.
-		if (!v) return;
-		settings.values[i] = v;
-		commit();
-	});
-	input.addEventListener('blur', () => {
-		input.value = settings.values[i];
-	});
-	input.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter') input.blur();
-	});
-});
 
 for (const { key, input } of SLIDERS) {
 	input.addEventListener('input', () => {
