@@ -50,7 +50,7 @@ test('démarrage : tous les modules se chargent, sans erreur JavaScript', TEST_T
 test('réglages abîmés : l’app démarre avec les réglages par défaut', TEST_TIMEOUT, async () => {
 	for (const stored of ['{pas du JSON', '"texte"', JSON.stringify({ routine: 'inconnue', zones: 9, values: 'x', delay: -5, fade: 'lent' })]) {
 		await withApp(stored, async (page) => {
-			// Par défaut : Dany Daortiz, 3 bandes, 6 en haut.
+			// Par défaut : 3 boulettes, 3 bandes, 6 en haut.
 			await page.tap(band(0, 3));
 			await expectShown(page, '6', 5000);
 		});
@@ -59,8 +59,8 @@ test('réglages abîmés : l’app démarre avec les réglages par défaut', TES
 
 /* ================= Zones ================= */
 
-test('Dany Daortiz : 3 bandes, chaque bande fait apparaître sa valeur (6, 16, 26)', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
+test('3 boulettes : 3 bandes, chaque bande fait apparaître sa valeur (6, 16, 26)', TEST_TIMEOUT, async () => {
+	await withApp({ ...FAST, routine: 'trois-boulettes' }, async (page) => {
 		for (let i = 0; i < 3; i++) {
 			await page.tap(band(i, 3));
 			await expectShown(page, ['6', '16', '26'][i]);
@@ -188,20 +188,20 @@ const routineChecked = (id: string): string => `document.querySelector('[data-ro
 test('réglages : une routine par nom, avec son découpage et ses valeurs, sans saisie possible', TEST_TIMEOUT, async () => {
 	await withApp({ ...FAST }, async (page) => {
 		await openSettings(page);
-		assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('[data-routine]')].map((b) => b.textContent)`), ['Dany Daortiz', 'Arcane Système']);
-		assert.equal(await page.evaluate(routineChecked('dany-daortiz')), true);
+		assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('[data-routine]')].map((b) => b.textContent)`), ['3 boulettes', 'Arcane Système']);
+		assert.equal(await page.evaluate(routineChecked('trois-boulettes')), true);
 		assert.equal(await text(page, '#zones-hint'), '3 bandes horizontales');
 		assert.deepEqual(await page.evaluate(SHOWN_VALUES), [['Haut', '6'], ['Milieu', '16'], ['Bas', '26']]);
 		assert.equal(await page.evaluate(`document.querySelectorAll('#settings input[type="text"]').length`), 0, 'aucun champ de saisie des valeurs');
 
 		await click(page, '[data-routine="arcane-systeme"]');
 		assert.equal(await page.evaluate(routineChecked('arcane-systeme')), true);
-		assert.equal(await page.evaluate(routineChecked('dany-daortiz')), false);
+		assert.equal(await page.evaluate(routineChecked('trois-boulettes')), false);
 		assert.equal(await text(page, '#zones-hint'), '4 coins de l\'écran');
 		assert.deepEqual(await page.evaluate(SHOWN_VALUES), [['Haut gauche', '17'], ['Haut droite', '19'], ['Bas gauche', '21'], ['Bas droite', '23']]);
 
-		// Retour à Dany Daortiz : ses valeurs n'ont pas bougé.
-		await click(page, '[data-routine="dany-daortiz"]');
+		// Retour à 3 boulettes : ses valeurs n'ont pas bougé.
+		await click(page, '[data-routine="trois-boulettes"]');
 		assert.deepEqual(await page.evaluate(SHOWN_VALUES), [['Haut', '6'], ['Milieu', '16'], ['Bas', '26']]);
 	});
 });
@@ -254,9 +254,9 @@ test('réglages : réglages par défaut rétablis', TEST_TIMEOUT, async () => {
 		await openSettings(page);
 		await click(page, '#defaults-btn');
 		const stored = await storedSettings(page);
-		assert.equal(stored.routine, 'dany-daortiz');
+		assert.equal(stored.routine, 'trois-boulettes');
 		assert.equal(stored.brightness, 100);
-		assert.equal(await page.evaluate(routineChecked('dany-daortiz')), true);
+		assert.equal(await page.evaluate(routineChecked('trois-boulettes')), true);
 	});
 });
 
@@ -302,7 +302,7 @@ test('mode test : 4 coins dessinés, touchers signalés, retour aux réglages et
 });
 
 test('mode test : 3 bandes sur toute la largeur', TEST_TIMEOUT, async () => {
-	await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
+	await withApp({ ...FAST, routine: 'trois-boulettes' }, async (page) => {
 		await openSettings(page);
 		await click(page, '#test-btn');
 		const zones = await page.evaluate<{ left: number; width: number; right: boolean; label: string }[]>(DRAWN_ZONES);
@@ -322,7 +322,7 @@ test('téléphone en paysage : l’app pivote, la boule garde sa taille et les z
 	const W = SCREEN.height; // largeur de l'écran en paysage
 	const H = SCREEN.width;
 	const LANDSCAPE_CENTER: Point = { x: W / 2, y: H / 2 };
-	await withApp({ ...FAST, routine: 'dany-daortiz' }, async (page) => {
+	await withApp({ ...FAST, routine: 'trois-boulettes' }, async (page) => {
 		const ballSize = `Math.round(document.querySelector('.ball').offsetWidth)`;
 		const portraitBall = await page.evaluate<number>(ballSize);
 

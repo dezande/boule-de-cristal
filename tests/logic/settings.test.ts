@@ -40,10 +40,10 @@ test('options supprimées d’une ancienne version : ignorées', () => {
 
 /* ---------- Routines ---------- */
 
-test('routines : Dany Daortiz en 3 bandes (6, 16, 26), Arcane Système en 4 coins (17, 19, 21, 23)', () => {
-	const dany = sanitizeSettings({ routine: 'dany-daortiz' });
-	assert.equal(zoneCount(dany), 3);
-	assert.deepEqual(routineValues(dany), ['6', '16', '26']);
+test('routines : 3 boulettes en 3 bandes (6, 16, 26), Arcane Système en 4 coins (17, 19, 21, 23)', () => {
+	const boulettes = sanitizeSettings({ routine: 'trois-boulettes' });
+	assert.equal(zoneCount(boulettes), 3);
+	assert.deepEqual(routineValues(boulettes), ['6', '16', '26']);
 	const arcane = sanitizeSettings({ routine: 'arcane-systeme' });
 	assert.equal(zoneCount(arcane), 4);
 	assert.deepEqual(routineValues(arcane), ['17', '19', '21', '23']);
@@ -53,8 +53,8 @@ test('chaque routine a exactement une valeur par zone', () => {
 	for (const id of ROUTINE_IDS) assert.equal(ROUTINES[id].values.length, ROUTINES[id].zones, id);
 });
 
-test('routine par défaut : Dany Daortiz', () => {
-	assert.equal(DEFAULTS.routine, 'dany-daortiz');
+test('routine par défaut : 3 boulettes', () => {
+	assert.equal(DEFAULTS.routine, 'trois-boulettes');
 });
 
 test('routine inconnue ou d’un mauvais type : routine par défaut', () => {
@@ -107,7 +107,7 @@ test('les réglages renvoyés sont une copie : les modifier ne touche pas aux va
 	const s = sanitizeSettings(null);
 	s.routine = 'arcane-systeme';
 	s.delay = 9;
-	assert.equal(DEFAULTS.routine, 'dany-daortiz');
+	assert.equal(DEFAULTS.routine, 'trois-boulettes');
 	assert.deepEqual(sanitizeSettings(null), defaults);
 });
 

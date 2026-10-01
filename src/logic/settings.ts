@@ -8,7 +8,7 @@
 /** 3 : bandes horizontales ; 4 : les 4 coins. */
 export type ZoneCount = 3 | 4;
 
-export type RoutineId = 'dany-daortiz' | 'arcane-systeme';
+export type RoutineId = 'trois-boulettes' | 'arcane-systeme';
 
 export interface Routine {
 	/** Nom affiché dans les réglages. */
@@ -23,7 +23,7 @@ export interface Routine {
  * Elles sont fixées ici : les réglages ne font que choisir la routine.
  */
 export const ROUTINES: Readonly<Record<RoutineId, Routine>> = Object.freeze({
-	'dany-daortiz': { name: 'Dany Daortiz', zones: 3, values: ['6', '16', '26'] },
+	'trois-boulettes': { name: '3 boulettes', zones: 3, values: ['6', '16', '26'] },
 	'arcane-systeme': { name: 'Arcane Système', zones: 4, values: ['17', '19', '21', '23'] },
 });
 
@@ -43,7 +43,7 @@ export interface Settings {
 }
 
 export const DEFAULTS: Readonly<Settings> = Object.freeze({
-	routine: 'dany-daortiz',
+	routine: 'trois-boulettes',
 	delay: 3,
 	fade: 1.5,
 	brightness: 100,

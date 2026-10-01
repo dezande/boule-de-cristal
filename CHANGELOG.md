@@ -61,8 +61,8 @@ Quel numéro augmenter :
 Le nombre de zones et les valeurs ne se règlent plus : on choisit une routine par son nom.
 
 - **Correction** : les valeurs étaient une seule liste partagée par tous les découpages. Régler 2, 3 ou 4 zones réutilisait les mêmes valeurs (la 1re zone gardait la même valeur partout), si bien qu'on ne pouvait pas avoir des valeurs différentes selon le découpage.
-- **Routines à la place de la configuration** : dans les réglages, deux boutons remplacent le choix 2 / 3 / 4 zones et la saisie des valeurs. **Dany Daortiz** (par défaut) : 3 bandes horizontales, 6 / 16 / 26. **Arcane Système** : 4 coins, 17 / 19 / 21 / 23. Les valeurs de la routine choisie sont rappelées zone par zone, en lecture seule. Le découpage en 2 bandes disparaît.
-- Les réglages d'une version précédente gardent délai, fondu, luminosité et jauge ; le nombre de zones et les valeurs enregistrés sont ignorés, et l'app démarre sur Dany Daortiz.
+- **Routines à la place de la configuration** : dans les réglages, deux boutons remplacent le choix 2 / 3 / 4 zones et la saisie des valeurs. **3 boulettes** (par défaut) : 3 bandes horizontales, 6 / 16 / 26. **Arcane Système** : 4 coins, 17 / 19 / 21 / 23. Les valeurs de la routine choisie sont rappelées zone par zone, en lecture seule. Le découpage en 2 bandes disparaît.
+- Les réglages d'une version précédente gardent délai, fondu, luminosité et jauge ; le nombre de zones et les valeurs enregistrés sont ignorés, et l'app démarre sur 3 boulettes.
 
 ## [1.3.0] — 2026-09-16
 
