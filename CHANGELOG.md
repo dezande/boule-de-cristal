@@ -10,6 +10,7 @@ Les numéros suivent [semver](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORR
 
 | Version | Commits | Date | En une phrase |
 | --- | --- | --- | --- |
+| [1.5.0] | 33 | 2026-10-03 | Bouton « Mes tours » et identifiant propre, pour s'installer à côté des autres |
 | [1.4.0] | 30 | 2026-10-01 | Routines nommées à la place du nombre de zones et des valeurs |
 | [1.3.0] | 27 | 2026-09-16 | Jauge de l'appui long, aides de debug supprimées |
 | [1.2.0] | 25 | 2026-09-16 | Règles de branche du kit, kit v1.1.0, Node figé |
@@ -57,7 +58,9 @@ Quel numéro augmenter :
 
 ---
 
-## [Non publié]
+## [1.5.0] — 2026-10-03
+
+Commits [`3bec643`](https://github.com/dezande/boule-de-cristal/commit/3bec643), [`c57e988`](https://github.com/dezande/boule-de-cristal/commit/c57e988) — 33 commits
 
 - **L'app s'installe enfin à côté des autres accessoires de scène.** Son manifeste déclarait `"id": "./"`, que Chrome résout à partir de la racine du site, et non du dossier de l'app : la boule de cristal, l'analyseur, les six prédictions et Pile ou face avaient toutes le même identifiant, `https://dezande.github.io/`. Sur Android, dès que l'une était installée, Chrome prenait les autres pour elle : il proposait de les ouvrir au lieu de les installer, puis échouait (« Impossible d'ouvrir l'application »). L'identifiant est maintenant `/boule-de-cristal/`, propre à l'app. Une version déjà installée est vue comme une autre app : la désinstaller, puis réinstaller.
 - **Un bouton « Mes tours » dans le menu**, pour revenir au menu principal de l'app « Mes tours » (https://dezande.github.io/), qui regroupe tous les tours dans une seule app installée. Chrome sur Android ne gère bien qu'une app installée par site : on installe désormais « Mes tours », et ce tour s'ouvre dedans.
@@ -228,6 +231,7 @@ Première version : une PWA mono-page, 100 % hors-ligne.
 - Le service worker met tout en cache pour le mode avion.
 
 
+[1.5.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.5.0
 [1.4.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.4.0
 [1.3.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.3.0
 [1.2.0]: https://github.com/dezande/boule-de-cristal/releases/tag/v1.2.0
